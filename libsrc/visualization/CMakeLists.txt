@@ -8,6 +8,8 @@ else(USE_GUI)
 endif(USE_GUI)
 
 add_library(visual ${NG_LIB_TYPE} ${LIB_VISUAL_SOURCES})
+set_target_properties(visual PROPERTIES OUTPUT_NAME "ngvisual")
+set_target_properties(visual PROPERTIES VERSION ${NETGEN_VERSION_MAJOR}.${NETGEN_VERSION_MINOR})
 
 target_link_libraries( visual PUBLIC ngcore PRIVATE "$<BUILD_INTERFACE:netgen_python>" ${MPI_CXX_LIBRARIES} ${OPENGL_LIBRARIES} )
 install( TARGETS visual ${NG_INSTALL_DIR})

@@ -8,7 +8,7 @@ def StartGUI():
     win.tk.eval('lappend ::auto_path ' + netgen._netgen_lib_dir)
     win.tk.eval('lappend ::auto_path ' + netgen._netgen_bin_dir)
     # load with absolute path to avoid issues on MacOS
-    win.tk.eval('load "'+netgen._netgen_lib_dir.replace('\\','/')+'/libgui[info sharedlibextension]" gui')
+    win.tk.eval('load "'+netgen._netgen_lib_dir.replace('\\','/')+'/libnggui[info sharedlibextension].6.2" gui')
     win.tk.eval( netgen.libngpy._meshing._ngscript)
 
     

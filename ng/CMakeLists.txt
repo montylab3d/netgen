@@ -49,6 +49,8 @@ if(USE_GUI)
         set_target_properties( gui PROPERTIES OUTPUT_NAME libgui )
     endif(WIN32)
     target_link_libraries( gui PRIVATE "$<BUILD_INTERFACE:netgen_python>" )
+    set_target_properties( gui PROPERTIES OUTPUT_NAME "nggui" )
+    set_target_properties( gui PROPERTIES VERSION ${NETGEN_VERSION_MAJOR}.${NETGEN_VERSION_MINOR} )
 
 endif(USE_GUI)
 

@@ -9,6 +9,9 @@ add_library(interface ${NG_LIB_TYPE}
 
 target_link_libraries(interface PUBLIC mesh csg geom2d stl visual PRIVATE netgen_cgns)
 
+set_target_properties(interface PROPERTIES OUTPUT_NAME "nginterface")
+set_target_properties(interface PROPERTIES VERSION ${NETGEN_VERSION_MAJOR}.${NETGEN_VERSION_MINOR})
+
 if(NOT WIN32)
   install( TARGETS interface ${NG_INSTALL_DIR})
 endif(NOT WIN32)

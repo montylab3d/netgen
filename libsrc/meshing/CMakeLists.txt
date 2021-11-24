@@ -33,6 +33,9 @@ add_library(mesh ${NG_LIB_TYPE}
         ${mesh_object_libs}
         )
 
+set_target_properties(mesh PROPERTIES OUTPUT_NAME "ngmesh")
+set_target_properties(mesh PROPERTIES VERSION ${NETGEN_VERSION_MAJOR}.${NETGEN_VERSION_MINOR})
+
 if(APPLE)
     set_target_properties( mesh PROPERTIES SUFFIX ".so")
 endif(APPLE)

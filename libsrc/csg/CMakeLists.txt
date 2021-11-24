@@ -7,6 +7,8 @@ add_library(csg ${NG_LIB_TYPE}
         solid.cpp specpoin.cpp spline3d.cpp surface.cpp triapprox.cpp zrefine.cpp 
         python_csg.cpp splinesurface.cpp
         )
+      set_target_properties(csg PROPERTIES OUTPUT_NAME "ngcsg")
+      set_target_properties(csg PROPERTIES VERSION ${NETGEN_VERSION_MAJOR}.${NETGEN_VERSION_MINOR})
 if(APPLE)
     set_target_properties( csg PROPERTIES SUFFIX ".so")
 endif(APPLE)
@@ -21,6 +23,8 @@ target_link_libraries(csg PUBLIC ngcore)
 if(USE_GUI)
     add_library(csgvis ${NG_LIB_TYPE} vscsg.cpp )
     target_link_libraries(csgvis PRIVATE "$<BUILD_INTERFACE:netgen_python>" PUBLIC ngcore)
+    set_target_properties(csgvis PROPERTIES OUTPUT_NAME "ngcsgvis")
+    set_target_properties(csgvis PROPERTIES VERSION ${NETGEN_VERSION_MAJOR}.${NETGEN_VERSION_MINOR})
     if(NOT WIN32)
         target_link_libraries(csgvis PUBLIC csg visual)
         if(APPLE)

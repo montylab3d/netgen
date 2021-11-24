@@ -4,6 +4,9 @@ add_library(stl ${NG_LIB_TYPE}
         stlgeommesh.cpp stlline.cpp stltool.cpp stltopology.cpp python_stl.cpp
         )
 
+set_target_properties(stl PROPERTIES OUTPUT_NAME "ngstl")
+set_target_properties(stl PROPERTIES VERSION ${NETGEN_VERSION_MAJOR}.${NETGEN_VERSION_MINOR})
+
 if(NOT WIN32)
     target_link_libraries( stl PUBLIC mesh )
     install( TARGETS stl ${NG_INSTALL_DIR})
@@ -14,6 +17,8 @@ target_link_libraries( stl PUBLIC ngcore PRIVATE "$<BUILD_INTERFACE:netgen_pytho
 if(USE_GUI)
     add_library(stlvis ${NG_LIB_TYPE} vsstl.cpp)
     target_link_libraries(stlvis PRIVATE "$<BUILD_INTERFACE:netgen_python>" PUBLIC ngcore)
+    set_target_properties(stlvis PROPERTIES OUTPUT_NAME "ngstlvis")
+    set_target_properties(stlvis PROPERTIES VERSION ${NETGEN_VERSION_MAJOR}.${NETGEN_VERSION_MINOR})
     if(NOT WIN32)
         target_link_libraries( stlvis PUBLIC stl )
         install( TARGETS stlvis ${NG_INSTALL_DIR})

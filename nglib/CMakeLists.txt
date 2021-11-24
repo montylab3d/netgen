@@ -21,6 +21,7 @@ if(WIN32)
 endif(WIN32)
 
 add_library(nglib SHARED nglib.cpp ${nglib_objects})
+set_target_properties(nglib PROPERTIES VERSION ${NETGEN_VERSION_MAJOR}.${NETGEN_VERSION_MINOR})
 if(NOT WIN32)
       target_link_libraries( nglib PUBLIC mesh interface geom2d csg stl visual)
       if(USE_GUI)
