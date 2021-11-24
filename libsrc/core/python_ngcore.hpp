@@ -125,10 +125,12 @@ namespace ngcore
     static std::string GetName() { return "D"; }
   };
 
+#ifdef _____LP64_____
   template<>
   struct PyNameTraits<size_t> {
     static std::string GetName() { return "S"; }
   };
+#endif
 
   template<typename T>
   struct PyNameTraits<std::shared_ptr<T>> {
