@@ -24,6 +24,8 @@ else(WIN32)
   target_link_libraries(togl ${TCL_STUB_LIBRARY} ${TK_STUB_LIBRARY})
   set_target_properties(togl PROPERTIES OUTPUT_NAME "ngtogl")
   set_target_properties(togl PROPERTIES VERSION ${NETGEN_VERSION_MAJOR}.${NETGEN_VERSION_MINOR})
+
+  install(TARGETS togl ${NG_INSTALL_DIR})
 endif(WIN32)
 
 target_link_libraries(togl ${OPENGL_LIBRARIES})
