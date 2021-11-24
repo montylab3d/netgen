@@ -26,6 +26,7 @@ if(USE_GUI)
 
     if(NOT BUILD_FOR_CONDA)
     add_executable(netgen ngappinit.cpp)
+    set_target_properties(netgen PROPERTIES OUTPUT_NAME netgen-mesher)
     if(WIN32)
       target_sources(netgen PRIVATE ../windows/netgen.rc)
     else(WIN32)
