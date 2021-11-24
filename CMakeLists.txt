@@ -282,7 +282,7 @@ else()
 endif()
 
 if (USE_PYTHON)
-    add_subdirectory(external_dependencies/pybind11)
+    include(cmake/pybind11Tools.cmake)
     find_path(PYBIND_INCLUDE_DIR pybind11/pybind11.h HINTS ${PYTHON_INCLUDE_DIR})
     if( PYBIND_INCLUDE_DIR )
         message(STATUS "Found Pybind11: ${PYBIND_INCLUDE_DIR}")
@@ -296,10 +296,6 @@ if (USE_PYTHON)
         target_link_libraries(netgen_python INTERFACE ${PYTHON_LIBRARIES})
     endif()
 
-    if(NG_INSTALL_PYBIND)
-      install(DIRECTORY ${PYBIND_INCLUDE_DIR}/pybind11 DESTINATION ${NG_INSTALL_DIR_INCLUDE} COMPONENT netgen_devel)
-      install(FILES ${PYBIND_INCLUDE_DIR}/../LICENSE DESTINATION ${NG_INSTALL_DIR_INCLUDE}/pybind11 COMPONENT netgen_devel)
-    endif(NG_INSTALL_PYBIND)
 endif (USE_PYTHON)
 
 #######################################################################
