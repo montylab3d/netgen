@@ -257,11 +257,11 @@ namespace netgen
     // int projecttype = PLANESPACE;
     // int projecttype = PARAMETERSPACE;
     
+
     static Timer tinit("init");
     tinit.Start();
     Meshing2OCCSurfaces meshing(geom, face, bb, projecttype, mparam);
     tinit.Stop();
-
 
     static Timer tprint("print");
     tprint.Start();
