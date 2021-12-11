@@ -129,7 +129,7 @@ if(USE_PYTHON)
     file(TO_CMAKE_PATH ${PYTHON_PACKAGES_INSTALL_DIR} PYTHON_PACKAGES_INSTALL_DIR)
 endif(USE_PYTHON)
 
-set(NG_INSTALL_SUFFIX netgen CACHE STRING "Suffix appended to install directories (project name)")
+set(NG_INSTALL_SUFFIX netgen-mesher CACHE STRING "Suffix appended to install directories (project name)")
 
 if(APPLE)
   set(NG_INSTALL_DIR_BIN_DEFAULT Contents/MacOS)
@@ -221,6 +221,7 @@ macro(get_dll_from_lib dll_path lib_path)
 endmacro()
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(WIN32)
     set(CMAKE_MFC_FLAG 0)
     # build convenience (aka object) libraries in windows)
@@ -395,11 +396,23 @@ if (USE_MPEG)
 endif (USE_MPEG)
 
 #######################################################################
-add_custom_target(ng_generate_version_file
-  ${CMAKE_COMMAND}
+# When not building directly from git, version will need to be
+# archived into the build package and set externally--- but still get
+# it from git originally!
+if (NETGEN_VERSION_GIT)
+  add_custom_target(ng_generate_version_file
+    ${CMAKE_COMMAND}
+    -DNETGEN_VERSION_GIT=${NETGEN_VERSION_GIT}
     -DBDIR=${CMAKE_CURRENT_BINARY_DIR}
     -P ${CMAKE_CURRENT_LIST_DIR}/cmake/generate_version_file.cmake
     )
+else()
+  add_custom_target(ng_generate_version_file
+    ${CMAKE_COMMAND}
+    -DBDIR=${CMAKE_CURRENT_BINARY_DIR}
+    -P ${CMAKE_CURRENT_LIST_DIR}/cmake/generate_version_file.cmake
+    )
+endif()  
 #######################################################################
 if(INSTALL_PROFILES)
     file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/netgen.sh "#!/bin/sh\n")
