@@ -133,8 +133,10 @@ int main(int argc, char ** argv)
 
   if (getenv ("NETGENDIR") && strlen (getenv ("NETGENDIR")))
     ngdir = getenv ("NETGENDIR");
-  else
-    ngdir = ".";
+  else {
+    ngdir = "/usr/share/netgen-mesher";
+    setenv("NETGENDIR", ngdir.c_str(), 1);
+  }
   
   verbose = parameters.GetDefineFlag ("V");
 
