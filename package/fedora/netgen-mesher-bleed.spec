@@ -57,6 +57,9 @@ mesh refinement.
 Summary:        Common files for netgen
 Requires:       hicolor-icon-theme
 Requires:       tix
+Requires:       cgnslib
+Requires:       cgnslib-openmpi
+Requires:       cgnslib-mpich
 BuildArch:      noarch
 
 %description    common
@@ -71,6 +74,9 @@ Netgen libraries.
 %package        devel
 Summary:        Development files for netgen
 Requires:       %{name}%{?_isa} = %{version}-%{release}
+Requires:       cgnslib-devel
+Requires:       cgnslib-openmpi-devel
+Requires:       cgnslib-mpich-devel
 
 %description    devel
 Development files for netgen.
@@ -174,20 +180,25 @@ Python3 interface for netgen compiled against mpich.
 %prep
 %autosetup -p1 -n {{{git_repo_name}}}
 
+# Remove bundled pybind
+rm -rf external_dependencies/pybind11
+
 %build
 ### serial version ###
 mkdir serial
 (cd serial
-%cmake -DCMAKE_INSTALL_PREFIX=%{_prefix} \
-  -DNG_INSTALL_SUFFIX=%{name} \
-  -DUSE_NATIVE_ARCH=OFF \
-  -DNG_INSTALL_DIR_INCLUDE=%{_includedir}/%{name} \
-  -DNG_INSTALL_DIR_LIB=%{_libdir} \
-  -DNG_INSTALL_DIR_CMAKE=%{_libdir}/cmake/%{name} \
-  -DNG_INSTALL_DIR_PYTHON=%{python3_sitearch}/%{name} \
-  -DUSE_JPEG=1 -DUSE_OCC=1 \
-  -DOpenGL_GL_PREFERENCE=GLVND \
-  ..
+ %cmake \
+     -DNETGEN_VERSION_GIT={{{git describe --tags --match "v[0-9]*" --long --dirty}}} \
+     -DCMAKE_INSTALL_PREFIX=%{_prefix} \
+     -DNG_INSTALL_SUFFIX=%{name} \
+     -DUSE_NATIVE_ARCH=OFF \
+     -DNG_INSTALL_DIR_INCLUDE=%{_includedir}/%{name} \
+     -DNG_INSTALL_DIR_LIB=%{_libdir} \
+     -DNG_INSTALL_DIR_CMAKE=%{_libdir}/cmake/%{name} \
+     -DNG_INSTALL_DIR_PYTHON=%{python3_sitearch}/%{name} \
+     -DUSE_CGNS=1 -DUSE_JPEG=1 -DUSE_OCC=1 \
+     -DOpenGL_GL_PREFERENCE=GLVND \
+     ..
 %cmake_build
 )
 
@@ -197,16 +208,19 @@ mkdir serial
 export CXX=mpicxx
 mkdir openmpi
 (cd openmpi
-%cmake -DCMAKE_INSTALL_PREFIX=%{_prefix} \
-  -DNG_INSTALL_SUFFIX=%{name} \
-  -DUSE_NATIVE_ARCH=OFF \
-  -DNG_INSTALL_DIR_INCLUDE=%{_includedir}/openmpi/%{name} \
-  -DNG_INSTALL_DIR_BIN=%{_libdir}/openmpi/bin/ \
-  -DNG_INSTALL_DIR_LIB=%{_libdir}/openmpi/lib/ \
-  -DNG_INSTALL_DIR_CMAKE=%{_libdir}/openmpi/lib/cmake/%{name} \
-  -DNG_INSTALL_DIR_PYTHON=%{_libdir}/openmpi/python%{python3_version}/site-packages/%{name} \
-  -DUSE_JPEG=1 -DUSE_OCC=1 -DUSE_MPI=1 \
-  ..
+ %cmake \
+     -DNETGEN_VERSION_GIT={{{git describe --tags --match "v[0-9]*" --long --dirty}}} \
+     -DCMAKE_INSTALL_PREFIX=%{_prefix} \
+     -DNG_INSTALL_SUFFIX=%{name} \
+     -DUSE_NATIVE_ARCH=OFF \
+     -DNG_INSTALL_DIR_INCLUDE=%{_includedir}/openmpi/%{name} \
+     -DNG_INSTALL_DIR_BIN=%{_libdir}/openmpi/bin/ \
+     -DNG_INSTALL_DIR_LIB=%{_libdir}/openmpi/lib/ \
+     -DNG_INSTALL_DIR_CMAKE=%{_libdir}/openmpi/lib/cmake/%{name} \
+     -DNG_INSTALL_DIR_PYTHON=%{_libdir}/openmpi/python%{python3_version}/site-packages/%{name} \
+     -DUSE_CGNS=1 -DUSE_JPEG=1 -DUSE_OCC=1 -DUSE_MPI=1 \
+     -DOpenGL_GL_PREFERENCE=GLVND \
+     ..
 %cmake_build
 )
 %{_openmpi_unload}
@@ -218,17 +232,20 @@ mkdir openmpi
 export CXX=mpicxx
 mkdir mpich
 (cd mpich
-%cmake -DCMAKE_INSTALL_PREFIX=%{_prefix} \
-  -DNG_INSTALL_SUFFIX=%{name} \
-  -DUSE_NATIVE_ARCH=OFF \
-  -DUSE_SUPERBUILD=OFF \
-  -DNG_INSTALL_DIR_INCLUDE=%{_includedir}/mpich/%{name} \
-  -DNG_INSTALL_DIR_BIN=%{_libdir}/mpich/bin/ \
-  -DNG_INSTALL_DIR_LIB=%{_libdir}/mpich/lib/ \
-  -DNG_INSTALL_DIR_CMAKE=%{_libdir}/mpich/lib/cmake/%{name} \
-  -DNG_INSTALL_DIR_PYTHON=%{_libdir}/mpich/python%{python3_version}/site-packages/%{name} \
-  -DUSE_JPEG=1 -DUSE_OCC=1 -DUSE_MPI=1 \
-   ..
+ %cmake \
+     -DNETGEN_VERSION_GIT={{{git describe --tags --match "v[0-9]*" --long --dirty}}} \
+     -DCMAKE_INSTALL_PREFIX=%{_prefix} \
+     -DNG_INSTALL_SUFFIX=%{name} \
+     -DUSE_NATIVE_ARCH=OFF \
+     -DUSE_SUPERBUILD=OFF \
+     -DNG_INSTALL_DIR_INCLUDE=%{_includedir}/mpich/%{name} \
+     -DNG_INSTALL_DIR_BIN=%{_libdir}/mpich/bin/ \
+     -DNG_INSTALL_DIR_LIB=%{_libdir}/mpich/lib/ \
+     -DNG_INSTALL_DIR_CMAKE=%{_libdir}/mpich/lib/cmake/%{name} \
+     -DNG_INSTALL_DIR_PYTHON=%{_libdir}/mpich/python%{python3_version}/site-packages/%{name} \
+     -DUSE_CGNS=1 -DUSE_JPEG=1 -DUSE_OCC=1 -DUSE_MPI=1 \
+     -DOpenGL_GL_PREFERENCE=GLVND \
+     ..
 %cmake_build
 )
 %{_mpich_unload}
