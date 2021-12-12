@@ -131,7 +131,7 @@ if(USE_PYTHON)
     file(TO_CMAKE_PATH ${PYTHON_PACKAGES_INSTALL_DIR} PYTHON_PACKAGES_INSTALL_DIR)
 endif(USE_PYTHON)
 
-set(NG_INSTALL_SUFFIX netgen CACHE STRING "Suffix appended to install directories (project name)")
+set(NG_INSTALL_SUFFIX netgen-mesher CACHE STRING "Suffix appended to install directories (project name)")
 
 if(APPLE)
   set(NG_INSTALL_DIR_BIN_DEFAULT Contents/MacOS)
@@ -224,6 +224,7 @@ endmacro()
 
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(WIN32)
     set(CMAKE_MFC_FLAG 0)
 endif(WIN32)
@@ -302,7 +303,7 @@ else()
 endif()
 
 if (USE_PYTHON)
-    add_subdirectory(external_dependencies/pybind11)
+    include(cmake/pybind11Tools.cmake)
     find_path(PYBIND_INCLUDE_DIR pybind11/pybind11.h HINTS ${PYTHON_INCLUDE_DIR})
     if( PYBIND_INCLUDE_DIR )
         message(STATUS "Found Pybind11: ${PYBIND_INCLUDE_DIR}")
@@ -317,10 +318,6 @@ if (USE_PYTHON)
         target_link_libraries(netgen_python INTERFACE ${PYTHON_LIBRARIES})
     endif()
 
-    if(NG_INSTALL_PYBIND)
-      install(DIRECTORY ${PYBIND_INCLUDE_DIR}/pybind11 DESTINATION ${NG_INSTALL_DIR_INCLUDE} COMPONENT netgen_devel)
-      install(FILES ${PYBIND_INCLUDE_DIR}/../LICENSE DESTINATION ${NG_INSTALL_DIR_INCLUDE}/pybind11 COMPONENT netgen_devel)
-    endif(NG_INSTALL_PYBIND)
 endif (USE_PYTHON)
 
 #######################################################################
@@ -427,11 +424,23 @@ if (USE_MPEG)
 endif (USE_MPEG)
 
 #######################################################################
-add_custom_target(ng_generate_version_file
-  ${CMAKE_COMMAND}
+# When not building directly from git, version will need to be
+# archived into the build package and set externally--- but still get
+# it from git originally!
+if (NETGEN_VERSION_GIT)
+  add_custom_target(ng_generate_version_file
+    ${CMAKE_COMMAND}
+    -DNETGEN_VERSION_GIT=${NETGEN_VERSION_GIT}
     -DBDIR=${CMAKE_CURRENT_BINARY_DIR}
     -P ${CMAKE_CURRENT_LIST_DIR}/cmake/generate_version_file.cmake
     )
+else()
+  add_custom_target(ng_generate_version_file
+    ${CMAKE_COMMAND}
+    -DBDIR=${CMAKE_CURRENT_BINARY_DIR}
+    -P ${CMAKE_CURRENT_LIST_DIR}/cmake/generate_version_file.cmake
+    )
+endif()  
 #######################################################################
 if(INSTALL_PROFILES)
     file(WRITE  ${CMAKE_CURRENT_BINARY_DIR}/netgen.sh "#!/bin/sh\n")

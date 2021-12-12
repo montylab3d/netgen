@@ -8,7 +8,7 @@ target_sources(nglib PRIVATE
 )
 
 if(USE_GUI)
-    target_sources(nggui PRIVATE vscsg.cpp csgpkg.cpp)
+  target_sources(nggui PRIVATE vscsg.cpp csgpkg.cpp)
 endif(USE_GUI)
 
 install(FILES

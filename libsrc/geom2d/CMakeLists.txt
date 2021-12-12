@@ -6,7 +6,7 @@ target_sources(nglib PRIVATE
 )
 
 if(USE_GUI)
-    target_sources(nggui PRIVATE vsgeom2d.cpp geom2dpkg.cpp)
+  target_sources(nggui PRIVATE vsgeom2d.cpp geom2dpkg.cpp)
 endif(USE_GUI)
 
 install(FILES

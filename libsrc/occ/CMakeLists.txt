@@ -8,7 +8,7 @@ target_sources(nglib PRIVATE
 
 if(USE_GUI)
     target_sources(nggui PRIVATE vsocc.cpp occpkg.cpp)
-endif(USE_GUI)
+  endif(USE_GUI)
 
 install(FILES
   occgeom.hpp occmeshsurf.hpp vsocc.hpp occ_utils.hpp
