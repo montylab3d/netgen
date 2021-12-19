@@ -462,13 +462,6 @@ namespace netgen
          glBegin (GL_LINE_STRIP);
          for (int j = 1; j <= nbnodes; j++)
          {
-           /*
-#if OCC_VERSION_MAJOR>=7 && OCC_VERSION_MINOR>=5           
-           gp_Pnt p = T -> Node(aEdgePoly->Nodes()(j)).Transformed(aEdgeLoc);
-#else           
-           gp_Pnt p = T -> Nodes()(aEdgePoly->Nodes()(j)).Transformed(aEdgeLoc);
-#endif           
-           */
            gp_Pnt p = T -> Node(aEdgePoly->Nodes()(j)).Transformed(aEdgeLoc);           
            glVertex3f (p.X(), p.Y(), p.Z());
          }
@@ -515,17 +508,10 @@ namespace netgen
          int nbnodes = aEdgePoly -> NbNodes();
          glBegin (GL_LINE_STRIP);
          for (int j = 1; j <= nbnodes; j++)
-           {
-             /*
-#if OCC_VERSION_MAJOR>=7 && OCC_VERSION_MINOR>=5
-             gp_Pnt p = T -> Node(aEdgePoly->Node(j)).Transformed(aEdgeLoc);
-#else             
-             gp_Pnt p = (T -> Nodes())(aEdgePoly->Nodes()(j)).Transformed(aEdgeLoc);
-#endif             
-             */
-             gp_Pnt p = T -> Node(aEdgePoly->Nodes()(j)).Transformed(aEdgeLoc);             
-             glVertex3f (p.X(), p.Y(), p.Z());
-           }
+         {
+            gp_Pnt p = T -> Node(aEdgePoly->Nodes()(j)).Transformed(aEdgeLoc);
+            glVertex3f (p.X(), p.Y(), p.Z());
+         }
          glEnd ();
       }
 
@@ -597,11 +583,7 @@ namespace netgen
 
             for (int k = 1; k <= 3; k++)
             {
-#if OCC_VERSION_MAJOR>=7 && OCC_VERSION_MINOR>=5              
-              uv = triangulation -> UVNode(triangle(k));
-#else              
-              uv = triangulation -> UVNodes()(triangle(k));
-#endif
+               uv = triangulation -> UVNode(triangle(k));
                prop.SetParameters (uv.X(), uv.Y());
 
                //	      surf->D0 (uv.X(), uv.Y(), pnt);

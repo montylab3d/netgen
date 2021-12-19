@@ -2822,8 +2822,8 @@ namespace netgen
   }
 
 
-  MeshingParameters :: MeshingParameters ()
-  {
+  //MeshingParameters :: MeshingParameters ()
+  //{
     // optimize3d = "cmdmustm";
     //optimize3d = "cmdmstm";
     // optsteps3d = 3;
@@ -2859,7 +2859,7 @@ namespace netgen
     // badellimit = 175;
     // check_impossible = 0;
     // secondorder = 0;
-  }
+  //}
 
   void MeshingParameters :: Print (ostream & ost) const
   {

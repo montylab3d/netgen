@@ -1335,7 +1335,7 @@ namespace netgen
 
     Flags geometrySpecificParameters;
     ///
-    MeshingParameters ();
+    MeshingParameters () = default;
     ///
     MeshingParameters (const MeshingParameters & mp2) = default;
     MeshingParameters (MeshingParameters && mp2) = default;
