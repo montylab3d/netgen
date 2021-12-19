@@ -157,9 +157,12 @@ if (USE_PYTHON)
     find_path(PYBIND_INCLUDE_DIR pybind11/pybind11.h HINTS ${PYTHON_INCLUDE_DIR})
     if( PYBIND_INCLUDE_DIR )
         message(STATUS "Found Pybind11: ${PYBIND_INCLUDE_DIR}")
+        set(NG_INSTALL_PYBIND ON)
     else( PYBIND_INCLUDE_DIR )
         message(FATAL_ERROR "Could NOT find pybind11!")
     endif( PYBIND_INCLUDE_DIR )
+    find_package(PythonInterp 3 REQUIRED)
+    find_package(PythonLibs 3 REQUIRED)
 
     target_include_directories(netgen_python INTERFACE ${PYBIND_INCLUDE_DIR} ${PYTHON_INCLUDE_DIRS})
     if(NOT ${BUILD_FOR_CONDA} OR WIN32)
@@ -172,6 +175,7 @@ if (USE_PYTHON)
       PYTHON_EXECUTABLE
       PYTHON_VERSION
       PYBIND_INCLUDE_DIR
+      NG_INSTALL_PYBIND
       )
 endif (USE_PYTHON)
 

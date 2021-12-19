@@ -32,7 +32,7 @@ option( CHECK_RANGE "Check array range access, automatically enabled if built in
 option( BUILD_STUB_FILES "Build stub files for better autocompletion" ON)
 option( BUILD_FOR_CONDA "Link python libraries only to executables" OFF)
 
-option( USE_SUPERBUILD       "build dependencies automatically" ON)
+option( USE_SUPERBUILD       "build dependencies automatically" OFF)
 option( TRACE_MEMORY     "Enable memory tracing" OFF)
 
 set(NG_COMPILE_FLAGS "" CACHE STRING "Additional compile flags")
@@ -225,6 +225,10 @@ endmacro()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_compile_options(-Wno-deprecated -Wno-sign-compare -Wno-unused-variable -Wno-unused-but-set-variable -g3 -O0 -fno-inline -fsanitize=undefined -fcommon)
+add_link_options(-g3 -O0 -fno-inline -fsanitize=undefined)
+
+
 if(WIN32)
     set(CMAKE_MFC_FLAG 0)
 endif(WIN32)
@@ -318,6 +322,10 @@ if (USE_PYTHON)
         target_link_libraries(netgen_python INTERFACE ${PYTHON_LIBRARIES})
     endif()
 
+    if(NG_INSTALL_PYBIND)
+      install(DIRECTORY ${PYBIND_INCLUDE_DIR}/pybind11 DESTINATION ${NG_INSTALL_DIR_INCLUDE} COMPONENT netgen_devel)
+      install(FILES ${PYBIND_INCLUDE_DIR}/../LICENSE DESTINATION ${NG_INSTALL_DIR_INCLUDE}/pybind11 COMPONENT netgen_devel)
+    endif(NG_INSTALL_PYBIND)
 endif (USE_PYTHON)
 
 #######################################################################

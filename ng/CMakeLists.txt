@@ -13,9 +13,17 @@ endif(WIN32)
 
 target_sources(nglib PRIVATE onetcl.cpp)
 
+<<<<<<< HEAD
 if(USE_GUI)
     target_sources(nggui PRIVATE
         gui.cpp ngpkg.cpp demoview.cpp parallelfunc.cpp ngtcl.cpp
+=======
+    add_library(gui SHARED
+        gui.cpp ngpkg.cpp demoview.cpp parallelfunc.cpp 
+        ../libsrc/stlgeom/stlpkg.cpp ../libsrc/visualization/visualpkg.cpp
+        ../libsrc/csg/csgpkg.cpp ../libsrc/geom2d/geom2dpkg.cpp
+        ../libsrc/occ/occpkg.cpp ../libsrc/occ/vsocc.cpp
+>>>>>>> 97de7b80 (Local packaging and updates to CMake)
     )
 
     if(NOT BUILD_FOR_CONDA)
@@ -36,6 +44,14 @@ if(USE_GUI)
 endif(USE_GUI)
 
 if(USE_PYTHON)
+    if(USE_GUI)
+        if(${BUILD_FOR_CONDA} AND UNIX AND NOT APPLE)
+            target_link_libraries( netgen -Wl,--no-as-needed ${PYTHON_LIBRARIES})
+        elseif()
+            target_link_libraries( netgen ${PYTHON_LIBRARIES})
+        endif()
+    endif()
+
     add_library(ngpy SHARED netgenpy.cpp)
     target_link_libraries( ngpy PUBLIC nglib PRIVATE "$<BUILD_INTERFACE:netgen_python>" )
     if(APPLE)

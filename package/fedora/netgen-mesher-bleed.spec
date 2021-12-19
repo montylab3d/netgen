@@ -265,7 +265,7 @@ Name: %{name}\
 Description:  %{summary}\
 Version: %{version}\
 Libs: -L\\\${libdir} -lnglib\
-Libs.private: -lngcgs -lnggeom2d -lngmesh -lngocc -lngstl\
+Libs.private: -lngcgs -lnggeom2d -lngmesh -lngocc -lngstl -lngcore -lnginterface\
 Cflags: -I\\\${includedir}\
 EOF\
 %{nil}
