@@ -225,9 +225,6 @@ endmacro()
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-add_compile_options(-Wno-deprecated -Wno-sign-compare -Wno-unused-variable -Wno-unused-but-set-variable -g3 -O0 -fno-inline -fsanitize=undefined -fcommon)
-add_link_options(-g3 -O0 -fno-inline -fsanitize=undefined)
-
 
 if(WIN32)
     set(CMAKE_MFC_FLAG 0)
