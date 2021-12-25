@@ -218,7 +218,7 @@ namespace netgen::cg
     Array<cgsize_t> data;
 
     if(dim==3)
-      for(const auto el : mesh.VolumeElements())
+      for(const Element &el : mesh.VolumeElements())
         if(el.GetIndex()==index)
         {
           ne++;
@@ -226,7 +226,7 @@ namespace netgen::cg
         }
 
     if(dim==2)
-      for(const auto el : mesh.SurfaceElements())
+      for(const Element2d &el : mesh.SurfaceElements())
         if(el.GetIndex()==index)
         {
           ne++;
@@ -234,7 +234,7 @@ namespace netgen::cg
         }
 
     if(dim==1)
-      for(const auto el : mesh.LineSegments())
+      for(const Segment &el : mesh.LineSegments())
         if(el.si==index)
         {
           ne++;
