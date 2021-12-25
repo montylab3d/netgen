@@ -568,15 +568,7 @@ namespace netgen
          int ntriangles = triangulation -> NbTriangles();
          for (int j = 1; j <= ntriangles; j++)
          {
-           /*
-#if OCC_VERSION_MAJOR>=7 && OCC_VERSION_MINOR>=5           
-           Poly_Triangle triangle = triangulation -> Triangle(j);
-#else
-           Poly_Triangle triangle = triangulation -> Triangles()(j);           
-#endif
-           */
-           Poly_Triangle triangle = triangulation -> Triangle(j);           
-           
+            Poly_Triangle triangle = triangulation -> Triangle(j);
             gp_Pnt p[3];
             for (int k = 1; k <= 3; k++)
               p[k-1] = (triangulation -> Node(triangle(k))).Transformed(loc);

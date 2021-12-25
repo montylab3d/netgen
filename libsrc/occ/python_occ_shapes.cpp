@@ -110,9 +110,9 @@ void ExtractEdgeData( const TopoDS_Edge & edge, int index, std::vector<double> *
 
     int nbnodes = poly -> NbNodes();
     for (int j = 1; j < nbnodes; j++)
-      {
-        auto p0 = occ2ng((T -> Node(poly->Nodes()(j))).Transformed(loc));
-        auto p1 = occ2ng((T -> Node(poly->Nodes()(j+1))).Transformed(loc));
+    {
+        auto p0 = occ2ng(T -> Node(poly->Node(j)).Transformed(loc));
+        auto p1 = occ2ng(T -> Node(poly->Node(j+1)).Transformed(loc));
         for(auto k : Range(3))
           {
             p[0].push_back(p0[k]);
@@ -144,11 +144,11 @@ void ExtractFaceData( const TopoDS_Face & face, int index, std::vector<double> *
     int ntriangles = triangulation -> NbTriangles();
     for (int j = 1; j <= ntriangles; j++)
     {
-      Poly_Triangle triangle = triangulation -> Triangle(j);
+        Poly_Triangle triangle = triangulation -> Triangle(j);
         std::array<Point<3>,3> pts;
         std::array<Vec<3>,3> normals;
         for (int k = 0; k < 3; k++)
-          pts[k] = occ2ng( (triangulation -> Node(triangle(k+1))).Transformed(loc) );
+            pts[k] = occ2ng( triangulation -> Node(triangle(k+1)).Transformed(loc) );
 
         for (int k = 0; k < 3; k++)
           {
@@ -1161,7 +1161,7 @@ DLL_HEADER void ExportNgOCCShapes(py::module &m)
                Poly_Triangle triangle = triangulation -> Triangle(j);
                std::array<Point<3>,3> pts;
                for (int k = 0; k < 3; k++)
-                 pts[k] = occ2ng( (triangulation -> Node(triangle(k+1))).Transformed(loc) );
+                 pts[k] = occ2ng( triangulation -> Node(triangle(k+1)).Transformed(loc) );
                triangles.Append ( pts );
              }
            
