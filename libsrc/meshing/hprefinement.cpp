@@ -85,7 +85,6 @@ namespace netgen
   
   HPRefElement :: HPRefElement(HPRefElement & el) :
     type(el.type), index(el.index), si(el.si), levelx(el.levelx), levely(el.levely), levelz(el.levelz), np(el.np), coarse_elnr(el.coarse_elnr), domin(el.domin), domout(el.domout), singedge_left(el.singedge_left), singedge_right(el.singedge_right)
-    
   {
     //Reset();
     for (int i=0; i<np ; i++) 
