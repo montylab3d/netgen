@@ -151,14 +151,14 @@ void ExtractFaceData( const TopoDS_Face & face, int index, std::vector<double> *
             pts[k] = occ2ng( triangulation -> Node(triangle(k+1)).Transformed(loc) );
 
         for (int k = 0; k < 3; k++)
-          {
-            auto uv = triangulation -> UVNode(triangle(k+1));
-            prop.SetParameters (uv.X(), uv.Y());
-            if (prop.IsNormalDefined())
-              normals[k] = occ2ng (prop.Normal());
-            else
-              normals[k] = Cross(pts[1]-pts[0], pts[2]-pts[0]);
-          }
+        {
+          auto uv = triangulation -> UVNode(triangle(k+1));
+          prop.SetParameters (uv.X(), uv.Y());
+          if (prop.IsNormalDefined())
+            normals[k] = occ2ng (prop.Normal());
+          else
+            normals[k] = Cross(pts[1]-pts[0], pts[2]-pts[0]);
+        }
 
         if(flip)
         {
