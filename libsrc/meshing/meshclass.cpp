@@ -377,9 +377,16 @@ namespace netgen
 
     for ( int i = 0; i < bcnames.Size(); i++ )
       if ( bcnames[i] ) delete bcnames[i];
+    bcnames.SetSize(0);
+    
     for (int i= 0; i< cd2names.Size(); i++)
       if (cd2names[i]) delete cd2names[i];
-
+    cd2names.SetSize(0);
+    
+    for (int i= 0; i< cd3names.Size(); i++)
+      if (cd3names[i]) delete cd3names[i];
+    cd3names.SetSize(0);
+    
 #ifdef PARALLEL
     paralleltop = make_unique<ParallelMeshTopology> (*this);
 #endif
