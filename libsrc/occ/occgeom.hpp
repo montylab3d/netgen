@@ -204,6 +204,10 @@ namespace netgen
 
     void BuildFMap();
 
+    // Please let this be temporary while the new Netgen internal API gets better fleshed out.
+    // External packages that manipulate OCCGeometry 
+    void ReconcileBase();
+
     auto GetShape() const { return shape; }
     Box<3> GetBoundingBox() const
     { return boundingbox; }

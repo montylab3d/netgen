@@ -1118,6 +1118,14 @@ namespace netgen
       face_map.clear();
       solid_map.clear();
 
+      ReconcileBase();
+   }
+
+
+
+   void OCCGeometry :: ReconcileBase()
+   {
+
       // Add shapes
       for(auto i1 : Range(1, vmap.Extent()+1))
       {
