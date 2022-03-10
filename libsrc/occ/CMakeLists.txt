@@ -11,6 +11,7 @@ if(USE_GUI)
   endif(USE_GUI)
 
 install(FILES
-  occgeom.hpp occmeshsurf.hpp vsocc.hpp
+  occgeom.hpp occmeshsurf.hpp vsocc.hpp occ_utils.hpp
+  occ_vertex.hpp occ_edge.hpp occ_face.hpp occ_solid.hpp occ_wire.hpp occ_shell.hpp
   DESTINATION ${NG_INSTALL_DIR_INCLUDE}/occ COMPONENT netgen_devel
 )

@@ -24,6 +24,39 @@ namespace netgen
 {
     typedef Handle(TopoDS_TShape) T_Shape;
 
+    inline const size_t ShapeHash(const TopoDS_Shape& shape){
+      return (size_t)shape.HashCode(INT_MAX);
+    }
+
+#if 0
+  class H_Shape : opencascade::handle<TopoDS_HShape> {
+    public:
+      H_Shape() :
+	opencascade::handle<TopoDS_HShape>(){}
+
+      H_Shape(const TopoDS_Shape *shapeptr) :
+        opencascade::handle<TopoDS_HShape>(new TopoDS_HShape(shape)){}
+    
+      const TopoDS_Shape& Shape(){
+        return this->Shape();
+      }
+    
+      const Handle(TopoDS_TShape) & TShape(){
+        return this->Shape().TShape();
+      }
+
+      // no access to handle() template classes outside the opencascade scope
+      bool operator< (const H_Shape & theHandle) const
+      { 
+	return get() < theHandle.get();
+      }
+      bool operator== (const H_Shape & theHandle) const
+      { 
+        return get() == theHandle.get();
+      }
+    };
+#endif
+  
     inline Point<3> occ2ng (const gp_Pnt & p)
     {
         return Point<3> (p.X(), p.Y(), p.Z());
@@ -70,8 +103,8 @@ namespace netgen
     class OCCIdentification
     {
     public:
-      T_Shape from;
-      T_Shape to;
+      TopoDS_Shape from;
+      TopoDS_Shape to;
       Transformation<3> trafo;
       string name;
       Identifications::ID_TYPE type;
@@ -138,7 +171,7 @@ namespace netgen
     {
       bool operator() (const TopoDS_Shape& s1, const TopoDS_Shape& s2) const
       {
-        return s1.TShape() < s2.TShape();
+        return ShapeHash(s1) < ShapeHash(s2);
       }
     };
 

@@ -17,11 +17,12 @@ namespace netgen
 
         public:
         OCCVertex( ) = default;
-        OCCVertex( TopoDS_Shape s );
+        OCCVertex( TopoDS_Shape & s );
         ~OCCVertex() {}
         Point<3> GetPoint() const override;
         size_t GetHash() const override;
         T_Shape TShape() { return tvertex; }
+        const TopoDS_Shape & Shape() const { return vertex; }
     };
 }
 

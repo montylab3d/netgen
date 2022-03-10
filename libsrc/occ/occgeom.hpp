@@ -21,6 +21,7 @@
 #include <StepRepr_CompoundRepresentationItem.hxx>
 #include <StepRepr_IntegerRepresentationItem.hxx>
 #include <StepRepr_ValueRepresentationItem.hxx>
+#include <Standard_Handle.hxx>
 #include <TCollection_HAsciiString.hxx>
 #include <TDocStd_Document.hxx>
 #include <TopoDS.hxx>
@@ -135,15 +136,20 @@ namespace netgen
     Point<3> center;
     OCCParameters occparam;
   public:
-    static std::map<T_Shape, ShapeProperties> global_shape_properties;
-    static std::map<T_Shape, std::vector<OCCIdentification>> identifications;
+    static std::map<size_t, ShapeProperties> global_shape_properties;
+    static std::map<size_t, std::vector<OCCIdentification>> identifications;
 
+    // Top-level OCC shape used to initialize geometry
     TopoDS_Shape shape;
-    TopTools_IndexedMapOfShape fmap, emap, vmap, somap, shmap, wmap; // legacy maps
+    // Legacy Hashmap lists of unique TopoDS_Shapes by shape
+    TopTools_IndexedMapOfShape fmap, emap, vmap, somap, shmap, wmap;
+
+    // NgArrays below are urrently indexed by shape's fmap|emap|vmap position,
+    // not faces|edges|vertices posiiton.  These should be the same... but...
+    
+    // singular faces, edges, vertices indexed by occ shape index
     NgArray<bool> fsingular, esingular, vsingular;
     Box<3> boundingbox;
-
-    std::map<T_Shape, int> edge_map, vertex_map, face_map, solid_map;
 
     mutable int changed;
     mutable NgArray<int> facemeshstatus;
@@ -204,11 +210,12 @@ namespace netgen
 
     void BuildFMap();
 
-    // Please let this be temporary while the new Netgen internal API gets better fleshed out.
-    // External packages that manipulate OCCGeometry 
-    void ReconcileBase();
-
     auto GetShape() const { return shape; }
+    const GeometryVertex & FindVertex(const TopoDS_Shape &s) const { return *vertex_map.at(ShapeHash(s)); }
+    const GeometryEdge & FindEdge(const TopoDS_Shape &s) const { return *edge_map.at(ShapeHash(s)); }
+    const GeometryFace & FindFace(const TopoDS_Shape &s) const { return *face_map.at(ShapeHash(s)); }
+    const GeometrySolid & FindSolid(const TopoDS_Shape &s) const { return *solid_map.at(ShapeHash(s)); }
+
     Box<3> GetBoundingBox() const
     { return boundingbox; }
 
@@ -261,7 +268,7 @@ namespace netgen
     // (Note: Local mesh size limited by the global max mesh size)
     void SetFaceMaxH(int facenr, double faceh, const MeshingParameters & mparam)
     {
-      if((facenr> 0) && (facenr <= fmap.Extent()))
+        if((facenr> 0) && (facenr <= fmap.Extent()))
         {
           face_maxh[facenr-1] = min(mparam.maxh,faceh);
             
@@ -380,61 +387,57 @@ namespace netgen
   template <class TBuilder>
   void PropagateIdentifications (TBuilder & builder, TopoDS_Shape shape, std::optional<Transformation<3>> trafo = nullopt)
   {
-    std::map<T_Shape, std::set<T_Shape>> mod_map;
-    std::map<T_Shape, bool> tshape_handled;
+    std::map<size_t, std::set<TopoDS_Shape, ShapeLess>> mod_map;
+    std::map<size_t, bool> shape_handled;
     Transformation<3> trafo_inv;
     if(trafo)
         trafo_inv = trafo->CalcInverse();
-  
+
     for (auto typ : { TopAbs_SOLID, TopAbs_FACE,  TopAbs_EDGE, TopAbs_VERTEX })
       for (TopExp_Explorer e(shape, typ); e.More(); e.Next())
       {
-          auto tshape = e.Current().TShape();
-          mod_map[tshape].insert(tshape);
-          tshape_handled[tshape] = false;
+        auto shape = e.Current();
+          mod_map[ShapeHash(shape)].insert(shape);
+          shape_handled[ShapeHash(shape)] = false;
       }
   
     for (auto typ : { TopAbs_SOLID, TopAbs_FACE,  TopAbs_EDGE, TopAbs_VERTEX })
       for (TopExp_Explorer e(shape, typ); e.More(); e.Next())
         {
-          auto tshape = e.Current().TShape();
-  
+          auto shape = e.Current();
           for (auto mods : builder.Modified(e.Current()))
-              mod_map[tshape].insert(mods.TShape());
+	    mod_map[ShapeHash(shape)].insert(mods);
         }
   
     for (auto typ : { TopAbs_SOLID, TopAbs_FACE,  TopAbs_EDGE, TopAbs_VERTEX })
       for (TopExp_Explorer e(shape, typ); e.More(); e.Next())
       {
-          auto tshape = e.Current().TShape();
+	  auto shape = e.Current();
   
-          if(tshape_handled[tshape])
+          if(shape_handled[ShapeHash(shape)])
               continue;
-          tshape_handled[tshape] = true;
+          shape_handled[ShapeHash(shape)] = true;
   
-          if(OCCGeometry::identifications.count(tshape)==0)
+          if(OCCGeometry::identifications.count(ShapeHash(shape))==0)
               continue;
   
-          auto tshape_mapped = mod_map[tshape];
+          auto oshape_mapped = mod_map[ShapeHash(shape)];
   
-          for(auto ident : OCCGeometry::identifications[tshape])
+          for(auto ident : OCCGeometry::identifications[ShapeHash(shape)])
           {
               // nothing happened
-              if(mod_map[ident.to].size()==1 && mod_map[ident.from].size() ==1)
+              if(mod_map[ShapeHash(ident.to)].size()==1 && mod_map[ShapeHash(ident.from)].size() ==1)
                   continue;
   
-              auto from = ident.from;
-              auto to = ident.to;
+              TopoDS_Shape from = ident.from;
+              TopoDS_Shape to = ident.to;
   
-              for(auto from_mapped : mod_map[from])
-                  for(auto to_mapped : mod_map[to])
+              for(TopoDS_Shape from_mapped : mod_map[ShapeHash(from)])
+                  for(TopoDS_Shape to_mapped : mod_map[ShapeHash(to)])
                   {
                       if(from==from_mapped && to==to_mapped)
                           continue;
   
-                      TopoDS_Shape s_from; s_from.TShape(from_mapped);
-                      TopoDS_Shape s_to; s_to.TShape(to_mapped);
-
                       Transformation<3> trafo_mapped = ident.trafo;
                       if(trafo)
                       {
@@ -443,15 +446,15 @@ namespace netgen
                           trafo_mapped.Combine(*trafo, trafo_temp);
                       }
   
-                      if(!IsMappedShape(trafo_mapped, s_from, s_to))
+                      if(!IsMappedShape(trafo_mapped, from_mapped, to_mapped))
                           continue;
   
                       OCCIdentification id_new = ident;
                       id_new.to = to_mapped;
                       id_new.from = from_mapped;
                       id_new.trafo = trafo_mapped;
-                      auto id_owner = from == tshape ? from_mapped : to_mapped;
-                      OCCGeometry::identifications[id_owner].push_back(id_new);
+                      auto id_owner = from == shape ? from_mapped : to_mapped;
+                      OCCGeometry::identifications[ShapeHash(id_owner)].push_back(id_new);
                   }
           }
       }
@@ -465,11 +468,11 @@ namespace netgen
     for (auto typ : { TopAbs_SOLID, TopAbs_FACE,  TopAbs_EDGE })
       for (TopExp_Explorer e(shape, typ); e.More(); e.Next())
         {
-          auto tshape = e.Current().TShape();
-          auto & prop = OCCGeometry::global_shape_properties[tshape];
-          for (auto mods : builder.Modified(e.Current()))
-            OCCGeometry::global_shape_properties[mods.TShape()].Merge(prop);
-          have_identifications |= OCCGeometry::identifications.count(tshape) > 0;
+          auto dshape = e.Current();
+          auto & prop = OCCGeometry::global_shape_properties[ShapeHash(dshape)];
+          for (auto mods : builder.Modified(dshape))
+            OCCGeometry::global_shape_properties[ShapeHash(mods)].Merge(prop);
+          have_identifications |= OCCGeometry::identifications.count(ShapeHash(dshape)) > 0;
         }
     if(have_identifications)
         PropagateIdentifications(builder, shape, trafo);

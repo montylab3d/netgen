@@ -6,7 +6,7 @@
 namespace netgen
 {
 
-    OCCVertex::OCCVertex( TopoDS_Shape s )
+    OCCVertex::OCCVertex( TopoDS_Shape & s )
         : vertex(TopoDS::Vertex(s)),
           tvertex(s.TShape())
     {
@@ -20,6 +20,6 @@ namespace netgen
 
     size_t OCCVertex::GetHash() const
     {
-        return reinterpret_cast<size_t>(tvertex.get());
+        return vertex.HashCode(INT_MAX);
     }
 }

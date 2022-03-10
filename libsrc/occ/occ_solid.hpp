@@ -14,13 +14,17 @@ namespace netgen
         TopoDS_Solid solid;
 
         public:
-        OCCSolid(TopoDS_Shape dshape)
+        OCCSolid(TopoDS_Shape & dshape)
             : tsolid(dshape.TShape()),
               solid(TopoDS::Solid(dshape))
         { }
 
+        TopoDS_Shape & Shape() { return solid; }
         T_Shape TShape() { return tsolid; }
-        size_t GetHash() const override { return reinterpret_cast<size_t>(tsolid.get()); }
+        size_t GetHash() const override
+        {
+	    return solid.HashCode(INT_MAX);
+	}
     };
 }
 

@@ -174,7 +174,7 @@ namespace netgen
 	*/
 
 	Transpose (D1, D1T);
-	DenseMatrix D1TD1(3,3);
+	DenseMatrix D1TD1(2,2);
 
 	D1TD1 = D1T*D1;
 	if (D1TD1.Det() == 0) throw SingularMatrixException();
