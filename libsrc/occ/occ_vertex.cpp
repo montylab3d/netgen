@@ -20,6 +20,6 @@ namespace netgen
 
     size_t OCCVertex::GetHash() const
     {
-        return vertex.HashCode(INT_MAX);
+        return ShapeHash(vertex);
     }
 }

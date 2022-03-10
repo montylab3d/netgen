@@ -8,9 +8,9 @@
 
 namespace netgen
 {
-    OCCFace::OCCFace(TopoDS_Shape & dshape)
-        : tface(dshape.TShape()),
-          face(TopoDS::Face(dshape))
+    OCCFace::OCCFace(TopoDS_Shape & shape)
+        : tface(shape.TShape()),
+          face(TopoDS::Face(shape))
     {
         BRepGProp::SurfaceProperties (dshape, props);
         bbox = ::netgen::GetBoundingBox(face);
@@ -27,7 +27,7 @@ namespace netgen
 
     size_t OCCFace::GetHash() const
     {
-        return face.HashCode(INT_MAX);
+        return ShapeHash(face);
     }
 
     Point<3> OCCFace::GetCenter() const
@@ -59,11 +59,9 @@ namespace netgen
         for(auto edge_ : GetEdges(face))
         {
             auto edge = TopoDS::Edge(edge_);
-            if(geom.edge_map.count(ShapeHash(edge))==0)
+            if(geom.edge_map.count(edge)==0)
                 continue;
-            auto edgenr = geom.edge_map[ShapeHash(edge)]->nr;
-            //auto edgenr = EdgeNumber(shape);
-            //if (edgenr < 1) continue;
+            auto edgenr = geom.edge_map.at(edge);
             auto & orientation = edge_orientation[edgenr];
             double s0, s1;
             auto cof = BRep_Tool::CurveOnSurface (edge, face, s0, s1);

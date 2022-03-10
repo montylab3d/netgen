@@ -17,13 +17,13 @@ namespace netgen
         public:
         OCCShell( ) = default;
         OCCShell( TopoDS_Shape & s )
-            : tshell(s.TShape()),
-              shell(TopoDS::Shell(s))
+            : shell(TopoDS::Shell(s)),
+              tshell(s.TShape())
         { }
         ~OCCShell() {}
         size_t GetHash() const override
         {
-	    return shell.HashCode(INT_MAX);
+            return ShapeHash(shell);
         }
         T_Shape TShape() { return tshell; }
         const TopoDS_Shape & Shape() const { return shell; }

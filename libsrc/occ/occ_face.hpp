@@ -23,7 +23,7 @@ namespace netgen
         double tolerance;
 
         public:
-        OCCFace(TopoDS_Shape & dshape);
+        OCCFace(TopoDS_Shape & shape);
 
         const TopoDS_Shape & Shape() const { return face; }
         T_Shape TShape() { return tface; }

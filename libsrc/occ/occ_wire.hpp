@@ -17,13 +17,13 @@ namespace netgen
         public:
         OCCWire( ) = default;
         OCCWire( TopoDS_Shape & s )
-            : twire(s.TShape()),
-              wire(TopoDS::Wire(s))
+            : wire(TopoDS::Wire(s)),
+              twire(s.TShape())
         { }
         ~OCCWire() {}
         size_t GetHash() const override
         {
-	  return wire.HashCode(INT_MAX);
+	  return ShapeHash(wire);
         }
         T_Shape TShape() { return twire; }
         const TopoDS_Shape & Shape() const { return wire; }

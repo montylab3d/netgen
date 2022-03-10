@@ -51,7 +51,7 @@ namespace netgen
 
     size_t OCCEdge::GetHash() const
     {
-        return edge.HashCode(INT_MAX);
+        return ShapeHash(edge);
     }
 
     void OCCEdge::ProjectPoint(Point<3>& p, EdgePointGeomInfo* gi) const

@@ -72,8 +72,8 @@ namespace netgen
 
     return hret;
     */
-    return min(mparam.maxh, 1/kappa);
-    //return (mparam.maxh*kappa < 1) ? mparam.maxh : 1/kappa;
+    // return min(mparam.maxh, 1/kappa);
+    return (mparam.maxh*kappa < 1) ? mparam.maxh : 1/kappa;
   }
 
 
@@ -402,7 +402,7 @@ namespace netgen
 
 
     // Philippose - 15/01/2009
-    double maxh = min2(geom.face_maxh[k-1], OCCGeometry::global_shape_properties[ShapeHash(geom.fmap(k))].maxh);
+    double maxh = min2(geom.face_maxh[k-1], OCCGeometry::global_shape_properties[geom.fmap(k)].maxh);
     //double maxh = mparam.maxh;
     //      int noldpoints = mesh->GetNP();
     int noldsurfel = mesh.GetNSE();
@@ -475,10 +475,9 @@ namespace netgen
     int dom = 0;
     for (TopExp_Explorer e(geom.GetShape(), TopAbs_SOLID); e.More(); e.Next(), dom++)
     {
-      maxhdom[dom] = min2(maxhdom[dom], OCCGeometry::global_shape_properties[ShapeHash(e.Current())].maxh);
-      maxlayer = max2(maxlayer, OCCGeometry::global_shape_properties[e.Current().TShape()].layer);
+      maxhdom[dom] = min2(maxhdom[dom], OCCGeometry::global_shape_properties[e.Current()].maxh);
+      maxlayer = max2(maxlayer, OCCGeometry::global_shape_properties[e.Current()].layer);
     }
-
     mesh.SetMaxHDomain (maxhdom);
 
     Box<3> bb = geom.GetBoundingBox();
@@ -533,8 +532,7 @@ namespace netgen
               }
 
             bool is_identified_edge = false;
-            // TODO: change to use hash value
-            const GeometryEdge& gedge = geom.FindEdge(e);
+            const auto& gedge = geom.GetEdge(geom.edge_map.at(e));
             auto& v0 = gedge.GetStartVertex();
             auto& v1 = gedge.GetEndVertex();
             for(auto & ident : v0.identifications)
@@ -564,12 +562,12 @@ namespace netgen
                 int face_index = geom.fmap.FindIndex(parent_face);
 
                 if(face_index >= 1) localh = min(localh,geom.face_maxh[face_index - 1]);
-                localh = min2(localh, OCCGeometry::global_shape_properties[ShapeHash(parent_face)].maxh);
+                localh = min2(localh, OCCGeometry::global_shape_properties[parent_face].maxh);
               }
 
             Handle(Geom_Curve) c = BRep_Tool::Curve(e, s0, s1);
 
-            localh = min2(localh, OCCGeometry::global_shape_properties[ShapeHash(e)].maxh);
+            localh = min2(localh, OCCGeometry::global_shape_properties[e].maxh);
             maxedgelen = max (maxedgelen, len);
             minedgelen = min (minedgelen, len);
             int maxj = max((int) ceil(len/localh), 2);
@@ -736,8 +734,8 @@ namespace netgen
 
             NgArray<int> linenums;
             auto is_identified_edge = [&](int e0, int e1) {
-                const auto& edge0 = geom.FindEdge(geom.emap(e0));
-	        const auto& edge1 = geom.FindEdge(geom.emap(e1));
+                const auto& edge0 = geom.GetEdge(geom.edge_map.at(geom.emap(e0)));
+                const auto& edge1 = geom.GetEdge(geom.edge_map.at(geom.emap(e1)));
 
                 if(edge0.primary == edge1.primary)
                     return true;
@@ -785,9 +783,9 @@ namespace netgen
 
                 if (mindist < 1e-3 * bb.Diam())
                   {
-                    cerr << "extremely small local h: " << mindist
+                    (*testout) << "extremely small local h: " << mindist
                                << " --> setting to " << 1e-3 * bb.Diam() << endl;
-                    cerr << "somewhere near " << line.p0 << " - " << line.p1 << endl;
+                    (*testout) << "somewhere near " << line.p0 << " - " << line.p1 << endl;
                     mindist = 1e-3 * bb.Diam();
                   }
 

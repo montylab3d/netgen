@@ -462,6 +462,13 @@ namespace netgen
          glBegin (GL_LINE_STRIP);
          for (int j = 1; j <= nbnodes; j++)
          {
+           /*
+#if OCC_VERSION_MAJOR>=7 && OCC_VERSION_MINOR>=5           
+           gp_Pnt p = T -> Node(aEdgePoly->Nodes()(j)).Transformed(aEdgeLoc);
+#else           
+           gp_Pnt p = T -> Nodes()(aEdgePoly->Nodes()(j)).Transformed(aEdgeLoc);
+#endif           
+           */
            gp_Pnt p = T -> Node(aEdgePoly->Nodes()(j)).Transformed(aEdgeLoc);           
            glVertex3f (p.X(), p.Y(), p.Z());
          }
@@ -508,10 +515,17 @@ namespace netgen
          int nbnodes = aEdgePoly -> NbNodes();
          glBegin (GL_LINE_STRIP);
          for (int j = 1; j <= nbnodes; j++)
-         {
-            gp_Pnt p = T -> Node(aEdgePoly->Nodes()(j)).Transformed(aEdgeLoc);
-            glVertex3f (p.X(), p.Y(), p.Z());
-         }
+           {
+             /*
+#if OCC_VERSION_MAJOR>=7 && OCC_VERSION_MINOR>=5
+             gp_Pnt p = T -> Node(aEdgePoly->Node(j)).Transformed(aEdgeLoc);
+#else             
+             gp_Pnt p = (T -> Nodes())(aEdgePoly->Nodes()(j)).Transformed(aEdgeLoc);
+#endif             
+             */
+             gp_Pnt p = T -> Node(aEdgePoly->Nodes()(j)).Transformed(aEdgeLoc);             
+             glVertex3f (p.X(), p.Y(), p.Z());
+           }
          glEnd ();
       }
 
@@ -534,7 +548,7 @@ namespace netgen
 
          if (!occgeometry->fvispar[i-1].IsHighlighted())
          {
-             auto c = OCCGeometry::global_shape_properties[ShapeHash(face)].col.value_or(Vec<4>(0,1,0,1) );
+            auto c = OCCGeometry::global_shape_properties[face].col.value_or(Vec<4>(0,1,0,1) );
             for(auto j : Range(4))
                mat_col[j] = c[j];
          }
@@ -568,14 +582,26 @@ namespace netgen
          int ntriangles = triangulation -> NbTriangles();
          for (int j = 1; j <= ntriangles; j++)
          {
-            Poly_Triangle triangle = triangulation -> Triangle(j);
+           /*
+#if OCC_VERSION_MAJOR>=7 && OCC_VERSION_MINOR>=5           
+           Poly_Triangle triangle = triangulation -> Triangle(j);
+#else
+           Poly_Triangle triangle = triangulation -> Triangles()(j);           
+#endif
+           */
+           Poly_Triangle triangle = triangulation -> Triangle(j);           
+           
             gp_Pnt p[3];
             for (int k = 1; k <= 3; k++)
               p[k-1] = (triangulation -> Node(triangle(k))).Transformed(loc);
 
             for (int k = 1; k <= 3; k++)
             {
-               uv = triangulation -> UVNode(triangle(k));
+#if OCC_VERSION_MAJOR>=7 && OCC_VERSION_MINOR>=5              
+              uv = triangulation -> UVNode(triangle(k));
+#else              
+              uv = triangulation -> UVNodes()(triangle(k));
+#endif
                prop.SetParameters (uv.X(), uv.Y());
 
                //	      surf->D0 (uv.X(), uv.Y(), pnt);

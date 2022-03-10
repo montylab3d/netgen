@@ -185,11 +185,6 @@ namespace netgen
     int dimension = 3;
   public:
 
-    std::map<size_t, GeometryVertex*> vertex_map;
-    std::map<size_t, GeometryEdge*> edge_map;
-    std::map<size_t, GeometryFace*> face_map;
-    std::map<size_t, GeometrySolid*> solid_map;
-
     NetgenGeometry()
     {
       ref = make_unique<Refinement>(*this);

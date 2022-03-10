@@ -1403,11 +1403,10 @@ namespace netgen
 
 		if(maxarea > 0 && meshedarea-meshedarea_before > maxarea)
 		  {
-		    cerr << "face nr = " << facenr <<endl
-                         << "meshed area = " << meshedarea-meshedarea_before << endl
-			 << "maximal area = " << maxarea << endl
-			 << "GIVING UP" << endl;
-		    return MESHING2_GIVEUP;
+                    cerr << "meshed area = " << meshedarea-meshedarea_before << endl
+                         << "maximal area = " << maxarea << endl
+                         << "GIVING UP" << endl;
+                    return MESHING2_GIVEUP;
 		  }
 	      
 
