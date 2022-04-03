@@ -236,6 +236,40 @@ namespace netgen
       solids.SetSize0();
   }
 
+  void NetgenGeometry :: PropagateFaceIdentification(GeometryFace &f, double tol)
+  {
+    // propagate face identification to edges
+    for(auto & ident: f.identifications)
+      for(auto e : static_cast<GeometryFace*>(ident.from)->edges)
+        for(auto e_other : static_cast<GeometryFace*>(ident.to)->edges)
+          if(e->IsMappedShape(*e_other, ident.trafo, tol))
+            e->identifications.Append( {e, e_other, ident.trafo, ident.type, ident.name} );
+  }
+
+  void NetgenGeometry :: PropagateEdgeIdentification(GeometryEdge &e, double tol)
+  {
+    // propagate edge identification to vertices
+    for(auto & ident: e.identifications)
+      {
+        auto & from = static_cast<GeometryEdge&>(*ident.from);
+        auto & to = static_cast<GeometryEdge&>(*ident.to);
+
+        GeometryVertex * pfrom[] = { &from.GetStartVertex(), &from.GetEndVertex() };
+        GeometryVertex * pto[] = { &to.GetStartVertex(), &to.GetEndVertex() };
+
+        // swap points of other edge if necessary
+        Point<3> p_from0 = ident.trafo(from.GetStartVertex().GetPoint());
+        Point<3> p_from1 = ident.trafo(from.GetEndVertex().GetPoint());
+        Point<3> p_to0 = to.GetStartVertex().GetPoint();
+
+        if(Dist(p_from1, p_to0) < Dist(p_from0, p_to0))
+          swap(pto[0], pto[1]);
+
+        for(auto i : Range(2))
+          pfrom[i]->identifications.Append( {pfrom[i], pto[i], ident.trafo, ident.type, ident.name} );
+      }
+  }
+
   void NetgenGeometry :: ProcessIdentifications()
   {
       for(auto i : Range(vertices))
@@ -247,18 +281,8 @@ namespace netgen
       for(auto i : Range(solids))
           solids[i]->nr = i;
 
-      auto mirror_identifications = [&] ( auto & shapes )
-      {
-          for(auto i : Range(shapes))
-          {
-              auto &s = shapes[i];
-              s->nr = i;
-              for(auto & ident : s->identifications)
-                  if(s.get() == ident.from)
-                      ident.to->identifications.Append(ident);
-          }
-      };
-
+#if 0
+      // for each face, propagate identifications to edges
       auto tol = 1e-8 * bounding_box.Diam();
       for(auto & f : faces)
         for(auto & ident: f->identifications)
@@ -267,6 +291,7 @@ namespace netgen
               if(e->IsMappedShape(*e_other, ident.trafo, tol))
                 e->identifications.Append( {e, e_other, ident.trafo, ident.type, ident.name} );
 
+      // for each edge, propagate identifications to vertices
       for(auto & e : edges)
         for(auto & ident: e->identifications)
           {
@@ -287,14 +312,31 @@ namespace netgen
               for(auto i : Range(2))
                   pfrom[i]->identifications.Append( {pfrom[i], pto[i], ident.trafo, ident.type, ident.name} );
           }
+#endif
 
+      // make identifications bi-directional
+      auto mirror_identifications = [&] ( auto & shapes )
+      {
+          for(auto i : Range(shapes))
+          {
+              auto &s = shapes[i];
+              s->nr = i;
+              for(auto & ident : s->identifications)
+                  if(s.get() == ident.from)
+                      ident.to->identifications.Append(ident);
+          }
+      };
+
+      // for each face, propagate identifications to edges
       mirror_identifications(vertices);
       mirror_identifications(edges);
       mirror_identifications(faces);
 
 
+      // find primaries
       auto find_primary = [&] (auto & shapes)
       {
+          // initialize defaults
           for(auto &s : shapes)
           {
               s->primary = s.get();

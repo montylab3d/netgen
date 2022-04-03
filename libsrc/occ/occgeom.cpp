@@ -864,8 +864,173 @@ namespace netgen
 
 
 
+   int OCCGeometry :: AddVertex(const TopoDS_Shape & vertex)
+   {
+
+     // XXXX these also need to add to OCCGeometry::shape!
+
+     auto sid = vertex_map.find(vertex);
+     if (sid == vertex_map.end())
+       {
+         auto occ_vertex = make_unique<OCCVertex>(TopoDS::Vertex(vertex));
+         auto nr = occ_vertex->nr = vertices.Size();
+         vertex_map[vertex] = nr;
+         if(global_shape_properties.count(vertex) > 0)
+           occ_vertex->properties = global_shape_properties[vertex];
+         vertices.Append(std::move(occ_vertex));
+         vmap.Add (vertex);
+         add_identification(vertex, nr, vertices, vertex_map);
+         return nr;
+       }
+     else
+       {
+         return sid->second;
+       }
+   }
+
+   int OCCGeometry :: AddEdge(const TopoDS_Shape & edge)
+   {
+     auto sid = edge_map.find(edge);
+     if (sid == edge_map.end())
+       {
+         auto v = GetVertices(edge);
+         auto v0 = AddVertex(v[0]);
+         auto v1 = AddVertex(v[1]);
+         auto occ_edge = make_unique<OCCEdge>(edge, *vertices[v0], *vertices[v1] );
+         auto nr = occ_edge->nr = edges.Size();
+         edge_map[edge] = nr;
+         if(global_shape_properties.count(edge) > 0)
+           occ_edge->properties = global_shape_properties[edge];
+         edges.Append(std::move(occ_edge));
+         emap.Add (edge);
+         add_identification(edge, nr, edges, edge_map);
+         PropagateEdgeIdentification(*edges[nr], 1e-7);
+         return nr;
+       }
+     else
+       {
+         return sid->second;
+       }
+   }
+
+   int OCCGeometry :: AddWire(const TopoDS_Shape & wire)
+   {
+     auto sid = wire_map.find(wire);
+     if (sid == wire_map.end())
+       {
+         for (auto edge : GetEdges(wire))
+           AddEdge(edge);
+         auto occ_wire = make_unique<OCCWire>(wire);
+         auto nr = occ_wire->nr = wires.Size();
+         wire_map[wire] = nr;
+         wires.Append(std::move(occ_wire));
+         wmap.Add (wire);
+         return nr;
+       }
+     else
+       {
+         return sid->second;
+       }
+   }
+
+   int OCCGeometry :: AddFace(const TopoDS_Shape & face)
+   {
+     auto sid = face_map.find(face);
+     if (sid == face_map.end())
+       {
+         for (auto wire : GetWires(face))
+           AddWire(wire);
+         auto occ_face = make_unique<OCCFace>(face);
+         auto nr = occ_face->nr = faces.Size();
+         face_map[face] = nr;
+         for(auto edge : GetEdges(face))
+           {
+             auto gedge = edges[AddEdge(edge)].get();
+             occ_face->edges.Append(gedge);
+             if(dimension==2){
+               if(edge.Orientation() == TopAbs_REVERSED)
+                 gedge->domout = nr;
+               else
+                 gedge->domin = nr;
+             }
+           }
+         if(global_shape_properties.count(face) > 0)
+             occ_face->properties = global_shape_properties[face];
+         faces.Append(std::move(occ_face));
+         fmap.Add (face);
+         add_identification(face, nr, faces, face_map);
+         PropagateFaceIdentification(*faces[nr], 1e-7);
+         return nr;
+       }
+     else
+       {
+         return sid->second;
+       }
+   }
+
+   int OCCGeometry :: AddShell(const TopoDS_Shape & shell)
+   {
+     auto sid = shell_map.find(shell);
+     if (sid == shell_map.end())
+       {
+         for (auto face : GetFaces(shell))
+           AddFace(face);
+         auto occ_shell = make_unique<OCCShell>(shell);
+         auto nr = occ_shell->nr = shells.Size();
+         shell_map[shell] = nr;
+         shells.Append(std::move(occ_shell));
+         shmap.Add (shell);
+         return nr;
+       }
+     else
+       {
+         return sid->second;
+       }
+   }
+
+   int OCCGeometry :: AddSolid(const TopoDS_Shape & solid)
+   {
+     auto sid = solid_map.find(solid);
+     if (sid == solid_map.end())
+       {
+         for (auto shell : GetShells(solid))
+           AddShell(shell);
+         auto occ_solid = make_unique<OCCSolid>(solid);
+         auto nr = occ_solid->nr = solids.Size();
+         solid_map[solid] = nr;
+         for(auto face : GetFaces(solid))
+           {
+             auto & gface = faces[AddFace(face)];
+             if(face.Orientation() == TopAbs_REVERSED)
+               gface->domin = nr;
+             else
+               gface->domout = nr;
+           }
+         if(global_shape_properties.count(solid) > 0)
+           occ_solid->properties = global_shape_properties[solid];
+         solids.Append(std::move(occ_solid));
+         somap.Add (solid);
+         return nr;
+       }
+     else
+       {
+         return sid->second;
+       }
+   }
+
    void OCCGeometry :: BuildFMap()
    {
+      NetgenGeometry::Clear();
+      edge_map.clear();
+      vertex_map.clear();
+      face_map.clear();
+      solid_map.clear();
+      wire_map.clear();
+      shell_map.clear();
+
+      wires.SetSize0();
+      shells.SetSize0();
+
       somap.Clear();
       shmap.Clear();
       fmap.Clear();
@@ -873,216 +1038,29 @@ namespace netgen
       emap.Clear();
       vmap.Clear();
 
-      TopExp_Explorer exp0, exp1, exp2, exp3, exp4, exp5;
+      // Solids (either inside a COMPOUND or Free)
+      for (auto solid : MyExplorer(shape, TopAbs_SOLID))
+        AddSolid(solid);
 
-      for (exp0.Init(shape, TopAbs_COMPOUND);
-         exp0.More(); exp0.Next())
-      {
-         TopoDS_Compound compound = TopoDS::Compound (exp0.Current());
-         (*testout) << "compound" << endl;
-         int i = 0;
-         for (exp1.Init(compound, TopAbs_SHELL);
-            exp1.More(); exp1.Next())
-         {
-            (*testout) << "shell " << ++i << endl;
-         }
-      }
+      // Free Shells (not inside a SOLID)
+      for (auto shell : MyExplorer(shape, TopAbs_SHELL, TopAbs_SOLID))
+        AddShell(shell);
 
-      for (exp0.Init(shape, TopAbs_SOLID);
-         exp0.More(); exp0.Next())
-      {
-         TopoDS_Solid solid = TopoDS::Solid (exp0.Current());
-
-         if (somap.FindIndex(solid) < 1)
-         {
-            somap.Add (solid);
-
-            for (exp1.Init(solid, TopAbs_SHELL);
-               exp1.More(); exp1.Next())
-            {
-               TopoDS_Shell shell = TopoDS::Shell (exp1.Current());
-               if (shmap.FindIndex(shell) < 1)
-               {
-                  shmap.Add (shell);
-
-                  for (exp2.Init(shell, TopAbs_FACE);
-                     exp2.More(); exp2.Next())
-                  {
-                     TopoDS_Face face = TopoDS::Face(exp2.Current());
-                     if (fmap.FindIndex(face) < 1)
-                     {
-                        fmap.Add (face);
-                        (*testout) << "face " << fmap.FindIndex(face) << " ";
-                        (*testout) << ((face.Orientation() == TopAbs_REVERSED) ? "-" : "+") << ", ";
-                        (*testout) << ((exp2.Current().Orientation() == TopAbs_REVERSED) ? "-" : "+") << endl;
-                        for (exp3.Init(exp2.Current(), TopAbs_WIRE);
-                           exp3.More(); exp3.Next())
-                        {
-                           TopoDS_Wire wire = TopoDS::Wire (exp3.Current());
-                           if (wmap.FindIndex(wire) < 1)
-                           {
-                              wmap.Add (wire);
-
-                              for (exp4.Init(exp3.Current(), TopAbs_EDGE);
-                                 exp4.More(); exp4.Next())
-                              {
-                                 TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
-                                 if (emap.FindIndex(edge) < 1)
-                                 {
-                                    emap.Add (edge);
-                                    for (exp5.Init(exp4.Current(), TopAbs_VERTEX);
-                                       exp5.More(); exp5.Next())
-                                    {
-                                       TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-                                       if (vmap.FindIndex(vertex) < 1)
-                                          vmap.Add (vertex);
-                                    }
-                                 }
-                              }
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-         }
-      }
-
-      // Free Shells
-      for (exp1.Init(shape, TopAbs_SHELL, TopAbs_SOLID); exp1.More(); exp1.Next())
-      {
-         TopoDS_Shell shell = TopoDS::Shell(exp1.Current());
-         if (shmap.FindIndex(shell) < 1)
-         {
-            shmap.Add (shell);
-
-            (*testout) << "shell " << shmap.FindIndex(shell) << " ";
-            (*testout) << ((shell.Orientation() == TopAbs_REVERSED) ? "-" : "+") << ", ";
-            (*testout) << ((exp1.Current().Orientation() == TopAbs_REVERSED) ? "-" : "+") << endl;
-
-            for (exp2.Init(shell, TopAbs_FACE); exp2.More(); exp2.Next())
-            {
-               TopoDS_Face face = TopoDS::Face(exp2.Current());
-               if (fmap.FindIndex(face) < 1)
-               {
-                 fmap.Add (face);
-
-                  for (exp3.Init(face, TopAbs_WIRE); exp3.More(); exp3.Next())
-                  {
-                     TopoDS_Wire wire = TopoDS::Wire (exp3.Current());
-                     if (wmap.FindIndex(wire) < 1)
-                     {
-                        wmap.Add (wire);
-
-                        for (exp4.Init(wire, TopAbs_EDGE); exp4.More(); exp4.Next())
-                        {
-                           TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
-                           if (emap.FindIndex(edge) < 1)
-                           {
-                              emap.Add (edge);
-                              for (exp5.Init(edge, TopAbs_VERTEX); exp5.More(); exp5.Next())
-                              {
-                                 TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-                                 if (vmap.FindIndex(vertex) < 1)
-                                    vmap.Add (vertex);
-                              }
-                           }
-                        }
-                     }
-                  }
-               }
-            }
-         }
-      }
-
-
-      // Free Faces
+      // Free Faces (not inside a SHELL)
       for (auto face : MyExplorer(shape, TopAbs_FACE, TopAbs_SHELL))
-        if (!fmap.Contains(face))
-          {
-            fmap.Add (face);
-            for (auto wire : MyExplorer(face, TopAbs_WIRE))
-              if (!wmap.Contains(wire))
-                {
-                  wmap.Add (wire);
-                  for (auto edge : MyExplorer(wire, TopAbs_EDGE))
-                    if (!emap.Contains(edge))
-                      {
-                        emap.Add (edge);
-                        for (auto vertex : MyExplorer(edge, TopAbs_VERTEX))
-                          if (!vmap.Contains(vertex))
-                            vmap.Add (vertex);
-                      }
-                }
-          }
+        AddFace(face);
 
+      // Free Wires (not inside a FACE)
+      for (auto wire : MyExplorer(shape, TopAbs_WIRE, TopAbs_FACE))
+        AddWire(wire);
 
-      // Free Wires
-
-      for (exp3.Init(shape, TopAbs_WIRE, TopAbs_FACE); exp3.More(); exp3.Next())
-      {
-         TopoDS_Wire wire = TopoDS::Wire (exp3.Current());
-         if (wmap.FindIndex(wire) < 1)
-         {
-            wmap.Add (wire);
-
-            for (exp4.Init(exp3.Current(), TopAbs_EDGE); exp4.More(); exp4.Next())
-            {
-               TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
-               if (emap.FindIndex(edge) < 1)
-               {
-                  emap.Add (edge);
-                  for (exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next())
-                  {
-                     TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-                     if (vmap.FindIndex(vertex) < 1)
-                        vmap.Add (vertex);
-                  }
-               }
-            }
-         }
-      }
-
-
-      // Free Edges
-      /*
-      for (exp4.Init(shape, TopAbs_EDGE, TopAbs_WIRE); exp4.More(); exp4.Next())
-      {
-         TopoDS_Edge edge = TopoDS::Edge(exp4.Current());
-         if (emap.FindIndex(edge) < 1)
-         {
-            emap.Add (edge);
-            for (exp5.Init(exp4.Current(), TopAbs_VERTEX); exp5.More(); exp5.Next())
-            {
-               TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-               if (vmap.FindIndex(vertex) < 1)
-                  vmap.Add (vertex);
-            }
-         }
-      }
-      */
+      // Free Edges (not inside a WIRE)
       for (auto edge : MyExplorer(shape, TopAbs_EDGE, TopAbs_WIRE))
-        if (!emap.Contains(edge))
-          {
-            emap.Add (edge);
-            for (auto vertex : MyExplorer(edge, TopAbs_VERTEX))
-              if (!vmap.Contains(vertex))
-                vmap.Add (vertex);
-          }
+        AddEdge(edge);
 
-      
-      // Free Vertices
-      /*
-      for (exp5.Init(shape, TopAbs_VERTEX, TopAbs_EDGE); exp5.More(); exp5.Next())
-      {
-         TopoDS_Vertex vertex = TopoDS::Vertex(exp5.Current());
-         if (vmap.FindIndex(vertex) < 1)
-            vmap.Add (vertex);
-      }
-      */
+      // Free Vertices (not inside an EDGE)
       for (auto vertex : MyExplorer(shape, TopAbs_VERTEX, TopAbs_EDGE))
-        if (!vmap.Contains(vertex))
-          vmap.Add (vertex);
+        AddVertex(vertex);
 
       facemeshstatus.DeleteAll();
       facemeshstatus.SetSize (fmap.Extent());
@@ -1093,11 +1071,10 @@ namespace netgen
       face_maxh.SetSize (fmap.Extent());
       face_maxh = 1e99; // mparam.maxh;
 
-      // Philippose - 15/01/2010      
-      face_maxh_modified.DeleteAll();      
-      face_maxh_modified.SetSize(fmap.Extent());      
+      // Philippose - 15/01/2010
+      face_maxh_modified.DeleteAll();
+      face_maxh_modified.SetSize(fmap.Extent());
       face_maxh_modified = 0;
-      
 
       // Philippose - 17/01/2009
       face_sel_status.DeleteAll();
@@ -1113,118 +1090,6 @@ namespace netgen
       vsingular.SetSize (vmap.Extent());
 
       fsingular = esingular = vsingular = false;
-
-      NetgenGeometry::Clear();
-      edge_map.clear();
-      vertex_map.clear();
-      face_map.clear();
-      solid_map.clear();
-
-      // Add shapes
-      for(auto i1 : Range(1, vmap.Extent()+1))
-      {
-          auto v = vmap(i1);
-          if(vertex_map.count(v)!=0)
-              continue;
-          auto occ_vertex = make_unique<OCCVertex>(TopoDS::Vertex(v));
-          occ_vertex->nr = vertices.Size();
-          vertex_map[v] = occ_vertex->nr;
-
-          if(global_shape_properties.count(v)>0)
-              occ_vertex->properties = global_shape_properties[v];
-          vertices.Append(std::move(occ_vertex));
-      }
-
-      for(auto i1 : Range(1, emap.Extent()+1))
-      {
-          auto e = emap(i1);
-          if(edge_map.count(e)!=0)
-              continue;
-          auto verts = GetVertices(e);
-          auto occ_edge = make_unique<OCCEdge>(e, *vertices[vertex_map[verts[0]]], *vertices[vertex_map[verts[1]]] );
-          occ_edge->nr = edges.Size();
-          edge_map[e] = occ_edge->nr;
-
-          occ_edge->properties = global_shape_properties[e];
-          edges.Append(std::move(occ_edge));
-      }
-
-      for(auto i1 : Range(1, fmap.Extent()+1))
-      {
-          auto f = fmap(i1);
-          if(face_map.count(f)>0)
-              continue;
-          auto k = faces.Size();
-          auto occ_face = make_unique<OCCFace>(f);
-          occ_face->nr = k;
-          face_map[f] = occ_face->nr;
-
-          for(auto e : GetEdges(f))
-              occ_face->edges.Append( edges[edge_map[e]].get() );
-
-	  if(global_shape_properties.count(f)>0)
-              occ_face->properties = global_shape_properties[f];
-	  faces.Append(std::move(occ_face));
-
-	  if(dimension==2)
-	      for(auto e : GetEdges(f))
-	      {
-		  auto & edge = *edges[edge_map[e]];
-		  if(e.Orientation() == TopAbs_REVERSED)
-		      edge.domout = k;
-		  else
-		      edge.domin = k;
-	      }
-      }
-
-      for(auto i1 : Range(1, somap.Extent()+1))
-      {
-          auto s = somap(i1);
-          int k = solids.Size();
-          if(solid_map.count(s)==0)
-          {
-              solid_map[s] = k;
-              auto occ_solid = make_unique<OCCSolid>(s);
-              if(global_shape_properties.count(s)>0)
-                  occ_solid->properties = global_shape_properties[s];
-              occ_solid->nr = k;
-              solids.Append(std::move(occ_solid));
-          }
-
-          for(auto f : GetFaces(s))
-          {
-              auto face_nr = face_map[f];
-              auto & face = faces[face_nr];
-              if(face->domin==-1)
-                  face->domin = k;
-              else
-                  face->domout = k;
-          }
-      }
-
-      // Add identifications
-      auto add_identifications = [&](auto & shapes, auto & shape_map)
-      {
-          for(auto &[hash, nr] : shape_map)
-            if(identifications.count(hash))
-              for(auto & ident : identifications[hash])
-                {
-                    if(shape_map.count(ident.from)==0 || shape_map.count(ident.to)==0)
-                        continue;
-
-                    ShapeIdentification si{
-                        shapes[shape_map[ident.from]].get(),
-                        shapes[shape_map[ident.to]].get(),
-                        ident.trafo,
-                        ident.type,
-                        ident.name
-                    };
-                    shapes[nr]->identifications.Append(si);
-                }
-      };
-      add_identifications( vertices, vertex_map );
-      add_identifications( edges, edge_map );
-      add_identifications( faces, face_map );
 
       bounding_box = ::netgen::GetBoundingBox( shape );
       ProcessIdentifications();
@@ -1604,10 +1469,6 @@ namespace netgen
       }
 
     // enumerate shapes and archive only integers
-    auto my_hash = [](const TopoDS_Shape & key) {
-        auto occ_hash = key.HashCode(1<<31UL);
-        return std::hash<decltype(occ_hash)>()(occ_hash);
-    };
     std::map<TopoDS_Shape, int, ShapeLess> shape_map;
     Array<TopoDS_Shape> shape_list;
 
@@ -1986,14 +1847,14 @@ namespace netgen
           auto s = verts_me[i];
           if(vmap.count(s)>0)
               continue;
-          auto p = trafo(occ2ng(s));
+          auto p = trafo(occ2ng(TopoDS::Vertex(s)));
           tree.Insert( p, i );
           vmap[s] = 0;
       }
 
       for (auto vert : verts_you)
       {
-          auto p = occ2ng(vert);
+          auto p = occ2ng(TopoDS::Vertex(vert));
           bool vert_mapped = false;
           tree.GetFirstIntersecting( p, p, [&](size_t i ) {
                   vert_mapped = true;

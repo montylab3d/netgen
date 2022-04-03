@@ -6,11 +6,6 @@
 
 namespace netgen
 {
-    Point<3> occ2ng (Handle(TopoDS_TShape) shape)
-    {
-        return occ2ng( Handle(BRep_TVertex)::DownCast(shape)->Pnt() );
-    }
-
     Transformation<3> occ2ng (const gp_Trsf & occ_trafo)
     {
         Transformation<3> trafo;

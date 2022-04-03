@@ -8,7 +8,7 @@
 
 namespace netgen
 {
-    OCCFace::OCCFace(TopoDS_Shape & shape)
+    OCCFace::OCCFace(const TopoDS_Shape & shape)
         : tface(shape.TShape()),
           face(TopoDS::Face(shape))
     {

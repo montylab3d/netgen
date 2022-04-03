@@ -16,7 +16,7 @@ namespace netgen
 
         public:
         OCCShell( ) = default;
-        OCCShell( TopoDS_Shape & s )
+        OCCShell( const TopoDS_Shape & s )
             : shell(TopoDS::Shell(s)),
               tshell(s.TShape())
         { }

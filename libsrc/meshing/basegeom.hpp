@@ -183,7 +183,10 @@ namespace netgen
     Array<std::pair<Point<3>, double>> restricted_h;
     Box<3> bounding_box;
     int dimension = 3;
-  public:
+
+    void PropagateFaceIdentification(GeometryFace &f, double tol);
+    void PropagateEdgeIdentification(GeometryEdge &e, double tol);
+public:
 
     NetgenGeometry()
     {

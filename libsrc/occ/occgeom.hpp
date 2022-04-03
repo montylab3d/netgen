@@ -13,6 +13,8 @@
 
 #include <meshing.hpp>
 #include "occ_utils.hpp"
+#include "occ_shell.hpp"
+#include "occ_wire.hpp"
 #include "occmeshsurf.hpp"
 
 #include <Quantity_ColorRGBA.hxx>
@@ -134,17 +136,23 @@ namespace netgen
   {
     Point<3> center;
     OCCParameters occparam;
+
+    // OCC wires and shells have no representation in the base class, track them here
+    Array<unique_ptr<OCCWire>> wires;
+    Array<unique_ptr<OCCShell>> shells;
+
   public:
     static std::map<TopoDS_Shape, ShapeProperties, ShapeLess> global_shape_properties;
     static std::map<TopoDS_Shape, std::vector<OCCIdentification>, ShapeLess> identifications;
 
     TopoDS_Shape shape;
+
     TopTools_IndexedMapOfShape fmap, emap, vmap, somap, shmap, wmap; // legacy maps
 
     NgArray<bool> fsingular, esingular, vsingular;
     Box<3> boundingbox;
 
-    std::map<TopoDS_Shape, int, ShapeLess> edge_map, vertex_map, face_map, solid_map;
+    std::map<TopoDS_Shape, int, ShapeLess> edge_map, vertex_map, face_map, solid_map, wire_map, shell_map;
 
     mutable int changed;
     mutable NgArray<int> facemeshstatus;
@@ -185,6 +193,13 @@ namespace netgen
     }
 
     OCCGeometry(const TopoDS_Shape& _shape, int aoccdim = 3, bool copy = false);
+
+    int AddVertex(const TopoDS_Shape &s);
+    int AddEdge(const TopoDS_Shape &s);
+    int AddWire(const TopoDS_Shape &s);
+    int AddFace(const TopoDS_Shape &s);
+    int AddShell(const TopoDS_Shape &s);
+    int AddSolid(const TopoDS_Shape &s);
 
     Mesh::GEOM_TYPE GetGeomType() const override
     { return Mesh::GEOM_OCC; }
@@ -351,6 +366,31 @@ namespace netgen
     //      void WriteOCC_STL(char * filename);
 
   private:
+    // 'auto' usage requires C++20 and the layers of templates break
+    // upcasting.  So, another template.
+    template<typename T>
+    void add_identification (const TopoDS_Shape & s,
+                             int nr,
+                             Array<unique_ptr<T>> & shapes,
+                             std::map<TopoDS_Shape, int, ShapeLess> & shape_map)
+    {
+        if(identifications.count(s))
+          for(auto & ident : identifications[s])
+            {
+              if(shape_map.count(ident.from)>0 && shape_map.count(ident.to)>0)
+                {
+                  ShapeIdentification si{
+                    shapes[shape_map.at(ident.from)].get(),
+                    shapes[shape_map.at(ident.to)].get(),
+                    ident.trafo,
+                    ident.type,
+                    ident.name
+                  };
+                  shapes[nr]->identifications.Append(si);
+                }
+            }
+    }
+
     //bool FastProject (int surfi, Point<3> & ap, double& u, double& v) const;
   };
 

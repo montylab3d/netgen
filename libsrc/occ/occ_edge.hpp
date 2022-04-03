@@ -21,7 +21,7 @@ namespace netgen
         GProp_GProps props;
 
         public:
-        OCCEdge(TopoDS_Shape & edge_, GeometryVertex & start_, GeometryVertex & end_);
+        OCCEdge(const TopoDS_Shape & edge_, GeometryVertex & start_, GeometryVertex & end_);
 
         const TopoDS_Shape & Shape() const { return edge; }
         T_Shape TShape() const { return tedge; }

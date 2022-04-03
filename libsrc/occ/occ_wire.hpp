@@ -16,7 +16,7 @@ namespace netgen
 
         public:
         OCCWire( ) = default;
-        OCCWire( TopoDS_Shape & s )
+        OCCWire( const TopoDS_Shape & s )
             : wire(TopoDS::Wire(s)),
               twire(s.TShape())
         { }

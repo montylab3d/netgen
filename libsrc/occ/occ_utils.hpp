@@ -43,13 +43,6 @@ namespace netgen
         return Vec<3> (v.X(), v.Y(), v.Z());
     }
 
-    DLL_HEADER Point<3> occ2ng (T_Shape shape);
-
-    inline Point<3> occ2ng (const TopoDS_Shape & s)
-    {
-        return occ2ng(s.TShape());
-    }
-
     inline Point<3> occ2ng (const TopoDS_Vertex & v)
     {
         return occ2ng (BRep_Tool::Pnt (v));
@@ -189,6 +182,14 @@ namespace netgen
     {
       ListOfShapes sub;
       for (TopExp_Explorer e(shape, TopAbs_SOLID); e.More(); e.Next())
+        sub.push_back(e.Current());
+      return sub;
+    }
+
+    inline ListOfShapes GetShells(const TopoDS_Shape & shape)
+    {
+      ListOfShapes sub;
+      for (TopExp_Explorer e(shape, TopAbs_SHELL); e.More(); e.Next())
         sub.push_back(e.Current());
       return sub;
     }

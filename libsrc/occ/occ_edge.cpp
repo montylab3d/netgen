@@ -7,7 +7,7 @@
 
 namespace netgen
 {
-    OCCEdge::OCCEdge(TopoDS_Shape & edge_, GeometryVertex & start_, GeometryVertex & end_)
+    OCCEdge::OCCEdge(const TopoDS_Shape & edge_, GeometryVertex & start_, GeometryVertex & end_)
         : GeometryEdge(start_, end_),
           tedge(edge_.TShape()),
           edge(TopoDS::Edge(edge_))

@@ -6,7 +6,7 @@
 namespace netgen
 {
 
-    OCCVertex::OCCVertex( TopoDS_Shape & s )
+    OCCVertex::OCCVertex( const TopoDS_Shape & s )
         : vertex(TopoDS::Vertex(s)),
           tvertex(s.TShape())
     {

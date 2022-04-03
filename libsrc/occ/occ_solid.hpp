@@ -8,13 +8,13 @@
 
 namespace netgen
 {
-    class OCCSolid : public GeometrySolid 
+    class OCCSolid : public GeometrySolid
     {
         T_Shape tsolid;
         TopoDS_Solid solid;
 
         public:
-        OCCSolid(TopoDS_Shape & shape)
+        OCCSolid(const TopoDS_Shape & shape)
             : tsolid(shape.TShape()),
               solid(TopoDS::Solid(shape))
         { }
