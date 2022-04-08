@@ -167,6 +167,9 @@ namespace ngcore
         delete trace;
         trace = nullptr;
       }
+    int i;
+    for(i=0;i<num_nodes;i++) delete nodedata[i];
+    num_nodes = 0;
     num_threads = 1;
   }
 

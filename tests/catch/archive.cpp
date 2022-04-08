@@ -136,6 +136,8 @@ void testPointer(Archive& in, Archive& out)
   CHECK(inholder.numbers.size() == 1);
   CHECK(inholder.numbers[0] == inholder2.numbers[0]);
   CHECK(*inholder.numbers[0] == 3);
+  delete holder.numbers[0];
+  delete inholder.numbers[0];
 }
 
 void testConstPointer(Archive& in, Archive& out)
@@ -191,6 +193,8 @@ void testMultipleInheritance(Archive& in, Archive& out)
       SharedPtrHolder* pin2 = nullptr;
       in & pin & pin2;
       checkPtr(pin, pin2);
+      delete pin->numbers[0];
+      delete pin;
     }
   SECTION("Archive shared ptrs to leaves of mult. inh.")
     {
@@ -200,6 +204,7 @@ void testMultipleInheritance(Archive& in, Archive& out)
       shared_ptr<SharedPtrHolder> pin2;
       in & pin & pin2;
       checkPtr(pin.get(), pin2.get());
+      delete pin->numbers[0];
     }
   SECTION("Virtual base class")
     {
@@ -209,6 +214,8 @@ void testMultipleInheritance(Archive& in, Archive& out)
       CommonBase* bin;
       in & bin & pin;
       checkPtr(pin, dynamic_cast<SharedPtrHolder*>(bin));
+      delete pin->numbers[0];
+      delete bin;
     }
   SECTION("Simple class without register")
     {
@@ -223,6 +230,8 @@ void testMultipleInheritance(Archive& in, Archive& out)
           in & ain;
           CHECK(ain->a == 5);
           CHECK(ain->d == 2.3);
+          delete ain;
+          delete a;
         }
       SECTION("check shared pointer")
         {
@@ -235,6 +244,7 @@ void testMultipleInheritance(Archive& in, Archive& out)
           CHECK(spain->d == 2.3);
         }
     }
+  delete p->numbers[0];
 }
 
 void testMap(Archive& in, Archive& out)
@@ -331,6 +341,7 @@ void testArchive(Archive& in, Archive& out)
     {
       SharedPtrAndPtrHolder* p = new NotRegisteredForArchive;
       REQUIRE_THROWS(out & p, Catch::Contains("not registered for archive"));
+      delete(p);
     }
   SECTION("nullptr")
     {
