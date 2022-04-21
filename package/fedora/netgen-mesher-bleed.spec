@@ -58,8 +58,7 @@ Summary:        Common files for netgen
 Requires:       hicolor-icon-theme
 Requires:       tix
 Requires:       cgnslib
-Requires:       cgnslib-openmpi
-Requires:       cgnslib-mpich
+
 BuildArch:      noarch
 
 %description    common
@@ -75,8 +74,6 @@ Netgen libraries.
 Summary:        Development files for netgen
 Requires:       %{name}%{?_isa} = %{version}-%{release}
 Requires:       cgnslib-devel
-Requires:       cgnslib-openmpi-devel
-Requires:       cgnslib-mpich-devel
 
 %description    devel
 Development files for netgen.
@@ -102,35 +99,31 @@ Python3 interface for netgen.
 %if %{build_openmpi}
 %package        openmpi
 Summary:        Netgen compiled against openmpi
-BuildRequires:  openmpi-devel
-BuildRequires:  python3-mpi4py-openmpi
-# Require explicitly for dir ownership and to guarantee the pickup of the right runtime
-Requires:       %{name}-common = %{version}-%{release}
-Requires:       %{name}-openmpi-libs%{?_isa} = %{version}-%{release}
-
 %description    openmpi
 Netgen compiled against openmpi.
+BuildRequires:  openmpi-devel
+BuildRequires:  python3-mpi4py-openmpi
+BuildRequires:  cgnslib-openmpi-devel
+Requires:       %{name}-common = %{version}-%{release}
+Requires:       %{name}-openmpi-libs%{?_isa} = %{version}-%{release}
+Requires:       cgnslib-openmpi
 
 %package        openmpi-libs
 Summary:        Netgen libraries compiled against openmpi
-
 %description    openmpi-libs
 Netgen libraries compiled against openmpi.
 
 %package        openmpi-devel
 Summary:        Development files for Netgen compiled against openmpi
-# Require explicitly for dir ownership
-Requires:       openmpi-devel
-Requires:       %{name}-openmpi%{?_isa} = %{version}-%{release}
-
 %description    openmpi-devel
 Development files for Netgen compiled against openmpi.
+Requires:       openmpi-devel
+Requires:       %{name}-openmpi%{?_isa} = %{version}-%{release}
 
 %package -n     python3-%{name}-openmpi
 Summary:        Python3 interface for netgen compiled against openmpi
 %{?python_provide:%python_provide python3-netgen-openmpi}
 Requires:       %{name}-openmpi-libs%{?_isa} = %{version}-%{release}
-
 %description -n python3-%{name}-openmpi
 Python3 interface for netgen compiled against openmpi.
 
@@ -141,35 +134,31 @@ Python3 interface for netgen compiled against openmpi.
 %if %{build_mpich}
 %package        mpich
 Summary:        Netgen compiled against mpich
-BuildRequires:  mpich-devel
-BuildRequires:  python3-mpi4py-mpich
-# Require explicitly for dir ownership and to guarantee the pickup of the right runtime
-Requires:       %{name}-common = %{version}-%{release}
-Requires:       %{name}-mpich-libs%{?_isa} = %{version}-%{release}
-
 %description    mpich
 Netgen compiled against mpich.
+BuildRequires:  mpich-devel
+BuildRequires:  python3-mpi4py-mpich
+BuildRequires:  cgnslib-mpich-devel
+Requires:       %{name}-common = %{version}-%{release}
+Requires:       %{name}-mpich-libs%{?_isa} = %{version}-%{release}
+Requires:       cgnslib-mpich
 
 %package        mpich-libs
 Summary:        Netgen libraries compiled against mpich
-
 %description    mpich-libs
 Netgen libraries compiled against mpich.
 
 %package        mpich-devel
 Summary:        Development files for Netgen compiled against mpich
-# Require explicitly for dir ownership
-Requires:       mpich-devel
-Requires:       %{name}-mpich%{?_isa} = %{version}-%{release}
-
 %description    mpich-devel
 Development files for Netgen compiled against mpich.
+Requires:       mpich-devel
+Requires:       %{name}-mpich%{?_isa} = %{version}-%{release}
 
 %package -n     python3-%{name}-mpich
 Summary:        Python3 interface for netgen compiled against mpich
 %{?python_provide:%python_provide python3-netgen-mpich}
 Requires:       %{name}-openmpi-libs%{?_isa} = %{version}-%{release}
-
 %description -n python3-%{name}-mpich
 Python3 interface for netgen compiled against mpich.
 
@@ -185,8 +174,7 @@ rm -rf external_dependencies/pybind11
 
 %build
 ### serial version ###
-mkdir serial
-(cd serial
+%define _vpath_builddir %{_target_platform}
  %cmake \
      -DNETGEN_VERSION_GIT={{{git describe --tags --match "v[0-9]*" --long --dirty}}} \
      -DCMAKE_INSTALL_PREFIX=%{_prefix} \
@@ -195,19 +183,20 @@ mkdir serial
      -DNG_INSTALL_DIR_INCLUDE=%{_includedir}/%{name} \
      -DNG_INSTALL_DIR_LIB=%{_libdir} \
      -DNG_INSTALL_DIR_CMAKE=%{_libdir}/cmake/%{name} \
-     -DNG_INSTALL_DIR_PYTHON=%{python3_sitearch}/%{name} \
+     -DNG_INSTALL_DIR_PYTHON=%{python3_sitearch} \
+     -DENABLE_UNIT_TESTS=ON \
+     -DCHECK_RANGE=ON \
+     -DUSE_SUPERBUILD=OFF \
+     -DTRACE_MEMORY=ON \
      -DUSE_CGNS=1 -DUSE_JPEG=1 -DUSE_OCC=1 \
      -DOpenGL_GL_PREFERENCE=GLVND \
-     ..
 %cmake_build
-)
 
 ### openmpi version ###
 %if %{build_openmpi}
+%define _vpath_builddir %{_target_platform}-openmpi
 %{_openmpi_load}
 export CXX=mpicxx
-mkdir openmpi
-(cd openmpi
  %cmake \
      -DNETGEN_VERSION_GIT={{{git describe --tags --match "v[0-9]*" --long --dirty}}} \
      -DCMAKE_INSTALL_PREFIX=%{_prefix} \
@@ -217,21 +206,18 @@ mkdir openmpi
      -DNG_INSTALL_DIR_BIN=%{_libdir}/openmpi/bin/ \
      -DNG_INSTALL_DIR_LIB=%{_libdir}/openmpi/lib/ \
      -DNG_INSTALL_DIR_CMAKE=%{_libdir}/openmpi/lib/cmake/%{name} \
-     -DNG_INSTALL_DIR_PYTHON=%{_libdir}/openmpi/python%{python3_version}/site-packages/%{name} \
+     -DNG_INSTALL_DIR_PYTHON=%{_libdir}/openmpi/python%{python3_version}/site-packages/ \
      -DUSE_CGNS=1 -DUSE_JPEG=1 -DUSE_OCC=1 -DUSE_MPI=1 \
      -DOpenGL_GL_PREFERENCE=GLVND \
-     ..
 %cmake_build
-)
 %{_openmpi_unload}
 %endif
 
 ### mpich version ###
 %if %{build_mpich}
+%define _vpath_builddir %{_target_platform}-mpich
 %{_mpich_load}
 export CXX=mpicxx
-mkdir mpich
-(cd mpich
  %cmake \
      -DNETGEN_VERSION_GIT={{{git describe --tags --match "v[0-9]*" --long --dirty}}} \
      -DCMAKE_INSTALL_PREFIX=%{_prefix} \
@@ -242,12 +228,10 @@ mkdir mpich
      -DNG_INSTALL_DIR_BIN=%{_libdir}/mpich/bin/ \
      -DNG_INSTALL_DIR_LIB=%{_libdir}/mpich/lib/ \
      -DNG_INSTALL_DIR_CMAKE=%{_libdir}/mpich/lib/cmake/%{name} \
-     -DNG_INSTALL_DIR_PYTHON=%{_libdir}/mpich/python%{python3_version}/site-packages/%{name} \
+     -DNG_INSTALL_DIR_PYTHON=%{_libdir}/mpich/python%{python3_version}/site-packages/ \
      -DUSE_CGNS=1 -DUSE_JPEG=1 -DUSE_OCC=1 -DUSE_MPI=1 \
      -DOpenGL_GL_PREFERENCE=GLVND \
-     ..
 %cmake_build
-)
 %{_mpich_unload}
 %endif
 
@@ -265,29 +249,34 @@ Name: %{name}\
 Description:  %{summary}\
 Version: %{version}\
 Libs: -L\\\${libdir} -lnglib\
-Libs.private: -lngcgs -lnggeom2d -lngmesh -lngocc -lngstl -lngcore -lnginterface\
+Libs.private: -lngcgs -lnggeom2d -lngmesh -lngocc -lngstl\
 Cflags: -I\\\${includedir}\
 EOF\
 %{nil}
 
 ### openmpi version ###
 %if %{build_openmpi}
+%define _vpath_builddir %{_target_platform}-openmpi
 %{_openmpi_load}
-(cd openmpi && %cmake_install)
+%cmake_install
 %writepkgconfig
 %{_openmpi_unload}
 %endif
 
 ### mpich version ###
 %if %{build_mpich}
+%define _vpath_builddir %{_target_platform}-mpich
 %{_mpich_load}
-(cd mpich && %cmake_install)
 %writepkgconfig
 %{_mpich_unload}
 %endif
 
 ### serial version ###
-(cd serial && %cmake_install)
+%define _vpath_builddir %{_target_platform}
+export PYTHONPATH=.:%{buildroot}%{python3_sitearch}
+export LD_PRELOAD=libasan.so.6
+export ASAN_OPTIONS=detect_odr_violation=0:detect_leaks=0
+%cmake_install
 export MPI_LIB=%{_libdir}
 export MPI_INCLUDE=%{_includedir}
 %writepkgconfig
@@ -308,17 +297,6 @@ find \( -name *.hpp -or -name *.hxx -or -name *.h -or -name *.ixx -or -name *.jx
 # Install the nglib.h header
 install -Dpm 0644 nglib/nglib.h %{buildroot}%{_includedir}/%{name}/nglib.h
 
-%ldconfig_scriptlets libs
-
-
-%ldconfig_scriptlets openmpi-libs
-
-
-%if %{build_mpich}
-%ldconfig_scriptlets mpich-libs
-%endif
-
-
 %files common
 %doc AUTHORS doc/ng4.pdf
 %license LICENSE
@@ -337,13 +315,14 @@ install -Dpm 0644 nglib/nglib.h %{buildroot}%{_includedir}/%{name}/nglib.h
 %exclude %{_includedir}/%{name}/private
 %{_libdir}/*.so
 %{_libdir}/pkgconfig/%{name}.pc
-%{_libdir}/cmake/%{name}/*.cmake
+%{_libdir}/cmake/%{name}/*
 
 %files devel-private
 %{_includedir}/%{name}/private
 
 %files -n python3-%{name}
-%{python3_sitearch}/%{name}/
+%{python3_sitearch}/pyngcore/
+%{python3_sitearch}/netgen/
 
 %if %{build_openmpi}
 %files openmpi
@@ -356,10 +335,11 @@ install -Dpm 0644 nglib/nglib.h %{buildroot}%{_includedir}/%{name}/nglib.h
 %{_includedir}/openmpi*/%{name}
 %{_libdir}/openmpi/lib/*.so
 %{_libdir}/openmpi/lib/pkgconfig/%{name}.pc
-%{_libdir}/openmpi/lib/cmake/%{name}/*.cmake
+%{_libdir}/openmpi/lib/cmake/%{name}/*
 
 %files -n python3-%{name}-openmpi
-%{_libdir}/openmpi/python%{python3_version}/site-packages/%{name}/
+%{_libdir}/openmpi/python%{python3_version}/site-packages/pyngcore/
+%{_libdir}/openmpi/python%{python3_version}/site-packages/netgen/
 %endif
 
 %if %{build_mpich}
@@ -373,16 +353,35 @@ install -Dpm 0644 nglib/nglib.h %{buildroot}%{_includedir}/%{name}/nglib.h
 %{_includedir}/mpich*/%{name}
 %{_libdir}/mpich/lib/*.so
 %{_libdir}/mpich/lib/pkgconfig/%{name}.pc
-%{_libdir}/mpich/lib/cmake/%{name}/*.cmake
+%{_libdir}/mpich/lib/cmake/%{name}/*
 
 %files -n python3-%{name}-mpich
-%{_libdir}/mpich/python%{python3_version}/site-packages/%{name}/
+%{_libdir}/mpich/python%{python3_version}/site-packages/pyngcore/
+%{_libdir}/mpich/python%{python3_version}/site-packages/netgen/
 %endif
 
 
 %changelog
-* Wed Nov 24 2021 Monty <xiphmont@gmail.com> - 6.2.dev-master
+* Fri Apr 08 2022 Monty <xiphmont@gmail.com> - 6.2.dev-master
 - Build ongoing fixes from master
+
+* Mon Mar 14 2022 Sandro Mani <manisandro@gmail.com> - 6.2.2202-1
+- Update to 6.2.2202
+
+* Sat Mar 05 2022 Sandro Mani <manisandro@gmail.com> - 6.2.2201-1
+- Update to 6.2.2201
+
+* Mon Jan 24 2022 Sandro Mani <manisandro@gmail.com> - 6.2.2105-3
+- Fix packaging of python files
+
+* Thu Jan 20 2022 Fedora Release Engineering <releng@fedoraproject.org> - 6.2.2105-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
+
+* Mon Oct 04 2021 Sandro Mani <manisandro@gmail.com> - 6.2.2105-1
+- Update to 6.2.2105
+
+* Fri Sep 03 2021 Sandro Mani <manisandro@gmail.com> - 6.2.2104-1
+- Update to 6.2.2104
 
 * Thu Jul 22 2021 Fedora Release Engineering <releng@fedoraproject.org> - 6.2.2103-3
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
