@@ -13,17 +13,9 @@ endif(WIN32)
 
 target_sources(nglib PRIVATE onetcl.cpp)
 
-<<<<<<< HEAD
 if(USE_GUI)
     target_sources(nggui PRIVATE
         gui.cpp ngpkg.cpp demoview.cpp parallelfunc.cpp ngtcl.cpp
-=======
-    add_library(gui SHARED
-        gui.cpp ngpkg.cpp demoview.cpp parallelfunc.cpp ngtcl.cpp
-        ../libsrc/stlgeom/stlpkg.cpp ../libsrc/visualization/visualpkg.cpp
-        ../libsrc/csg/csgpkg.cpp ../libsrc/geom2d/geom2dpkg.cpp
-        ../libsrc/occ/occpkg.cpp ../libsrc/occ/vsocc.cpp
->>>>>>> 97de7b80 (Local packaging and updates to CMake)
     )
 
     if(NOT BUILD_FOR_CONDA)
@@ -61,7 +53,7 @@ if(USE_PYTHON)
         set_target_properties( ngpy PROPERTIES OUTPUT_NAME "libngpy")
     endif()
     set_target_properties(ngpy PROPERTIES INSTALL_RPATH "${NG_RPATH_TOKEN}/../${NETGEN_PYTHON_RPATH}")
-    install(TARGETS ngpy DESTINATION ${NG_INSTALL_DIR_PYTHON}/${NG_INSTALL_SUFFIX} COMPONENT netgen)
+    install(TARGETS ngpy DESTINATION ${NG_INSTALL_DIR_PYTHON}/netgen COMPONENT netgen)
 
     if(USE_GUI)
         add_library(ngguipy SHARED ngguipy.cpp)
@@ -73,7 +65,7 @@ if(USE_PYTHON)
             set_target_properties( ngguipy PROPERTIES OUTPUT_NAME "libngguipy")
         endif()
         set_target_properties(ngguipy PROPERTIES INSTALL_RPATH "${NG_RPATH_TOKEN}/../${NETGEN_PYTHON_RPATH}")
-        install(TARGETS ngguipy DESTINATION ${NG_INSTALL_DIR_PYTHON}/${NG_INSTALL_SUFFIX} COMPONENT netgen)
+        install(TARGETS ngguipy DESTINATION ${NG_INSTALL_DIR_PYTHON}/netgen COMPONENT netgen)
     endif(USE_GUI)
 endif(USE_PYTHON)
 
