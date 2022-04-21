@@ -159,7 +159,7 @@ DLL_HEADER void ExportNetgenMeshing(py::module &m)
         if (!procs.Contains(c.Rank()))
           { throw Exception("rank "+ToString(c.Rank())+" not in subcomm"); }
 	return c.SubCommunicator(procs);
-      }, py::arg("procs"));
+    }, py::arg("procs"));
   ;
 
 

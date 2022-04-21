@@ -282,7 +282,7 @@ DLL_HEADER void ExportNgOCC(py::module &m)
                                mesh->SendRecvMesh();
                              }
                            return mesh;
-                         }, py::arg("mp") = nullptr, py::arg("comm")=NgMPI_Comm{},
+                         }, py::arg("pars") = static_cast<MeshingParameters*>(nullptr), py::arg("comm")=NgMPI_Comm{},
       py::call_guard<py::gil_scoped_release>(),
          (meshingparameter_description + occparameter_description).c_str())
     .def_property_readonly("shape", [](const OCCGeometry & self) { return self.GetShape(); })

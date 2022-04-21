@@ -6,7 +6,7 @@ namespace ngcore
   template <>
   class SIMD<mask64,2>
   {
-    int64x2_t mask;
+    uint64x2_t mask;
   public:
     SIMD (int i)
     {
@@ -16,8 +16,7 @@ namespace ngcore
 
     SIMD (bool i0, bool i1) { mask[0] = i0 ? -1 : 0; mask[1] = i1 ? -1 : 0; }
     SIMD (SIMD<mask64,1> i0, SIMD<mask64,1> i1) { mask[0] = i0[0]; mask[1] = i1[0]; }
-    // SIMD (float64x2_t _data) : mask{_data} { }
-    SIMD (int64x2_t _data) : mask{_data} { }
+    SIMD (uint64x2_t _data) : mask{_data} { }
     auto Data() const { return mask; }
     static constexpr int Size() { return 2; }
     // static NETGEN_INLINE SIMD<mask64, 2> GetMaskFromBits (unsigned int i);

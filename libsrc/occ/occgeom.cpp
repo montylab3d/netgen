@@ -1183,7 +1183,7 @@ namespace netgen
     Array<GeometryVertex*> verts;
     const auto& occface = dynamic_cast<const OCCFace&>(face);
     for(auto& vert : GetVertices(occface.Shape()))
-      verts.Append(vertices[vertex_map.at(vert.TShape())].get());
+      verts.Append(vertices[vertex_map.at(vert)].get());
     return move(verts);
   }
 

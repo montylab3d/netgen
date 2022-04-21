@@ -406,7 +406,7 @@ namespace netgen
     //double maxh = mparam.maxh;
     //      int noldpoints = mesh->GetNP();
     int noldsurfel = mesh.GetNSE();
-    int layer = OCCGeometry::global_shape_properties[TopoDS::Face(geom.fmap(k)).TShape()].layer;
+    int layer = OCCGeometry::global_shape_properties[geom.fmap(k)].layer;
 
     static Timer tsurfprop("surfprop");
     tsurfprop.Start();
@@ -517,7 +517,7 @@ namespace netgen
         for (int i = 1; i <= nedges && !multithread.terminate; i++)
           {
             TopoDS_Edge e = TopoDS::Edge (geom.emap(i));
-            int layer = OCCGeometry::global_shape_properties[e.TShape()].layer;
+            int layer = OCCGeometry::global_shape_properties[e].layer;
             multithread.percent = 100 * (i-1)/double(nedges);
             if (BRep_Tool::Degenerated(e)) continue;
 
@@ -590,7 +590,7 @@ namespace netgen
             double maxcur = 0;
             multithread.percent = 100 * (i-1)/double(nedges);
             TopoDS_Edge edge = TopoDS::Edge (geom.emap(i));
-            int layer = OCCGeometry::global_shape_properties[edge.TShape()].layer;
+            int layer = OCCGeometry::global_shape_properties[edge].layer;
             if (BRep_Tool::Degenerated(edge)) continue;
             double s0, s1;
             Handle(Geom_Curve) c = BRep_Tool::Curve(edge, s0, s1);
@@ -625,7 +625,7 @@ namespace netgen
           {
             multithread.percent = 100 * (i-1)/double(nfaces);
             TopoDS_Face face = TopoDS::Face(geom.fmap(i));
-            int layer = OCCGeometry::global_shape_properties[face.TShape()].layer;
+            int layer = OCCGeometry::global_shape_properties[face].layer;
             TopLoc_Location loc;
             Handle(Geom_Surface) surf = BRep_Tool::Surface (face);
             Handle(Poly_Triangulation) triangulation = BRep_Tool::Triangulation (face, loc);
@@ -691,7 +691,7 @@ namespace netgen
             for (int i = 1; i <= nedges && !multithread.terminate; i++)
               {
                 TopoDS_Edge edge = TopoDS::Edge (geom.emap(i));
-                int layer = OCCGeometry::global_shape_properties[edge.TShape()].layer;
+                int layer = OCCGeometry::global_shape_properties[edge].layer;
                 if (BRep_Tool::Degenerated(edge)) continue;
 
                 double s0, s1;

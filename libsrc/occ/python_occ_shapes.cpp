@@ -71,6 +71,7 @@
 #include <gp_Ax2d.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Trsf.hxx>
+#include <gp_GTrsf.hxx>
 
 using namespace netgen;
 
@@ -667,8 +668,10 @@ DLL_HEADER void ExportNgOCCShapes(py::module &m)
     .value("SHAPE", TopAbs_SHAPE)
     .export_values()
     ;
-  
-  
+
+  auto pyListOfShapes_Forward = py::class_<ListOfShapes> (m, "ListOfShapes");
+  auto pyGeom2d_Curve_Forward = py::class_<Handle(Geom2d_Curve)> (m, "Geom2d_Curve");
+
   py::class_<TopoDS_Shape> (m, "TopoDS_Shape")
     .def("__str__", [] (const TopoDS_Shape & shape)
          {
@@ -1108,11 +1111,11 @@ DLL_HEADER void ExportNgOCCShapes(py::module &m)
            BRepMesh_IncrementalMesh (shape, deflection, true);
          })
 
-
-    .def("Identify", py::overload_cast<const TopoDS_Shape &, const TopoDS_Shape &, string, Identifications::ID_TYPE, std::optional<std::variant<gp_Trsf, gp_GTrsf>>>(&Identify),
-            py::arg("other"), py::arg("name"),
-            py::arg("type")=Identifications::PERIODIC, py::arg("trafo")=nullopt,
-            "Identify shapes for periodic meshing")
+    .def("Identify",
+         py::overload_cast<const TopoDS_Shape &, const TopoDS_Shape &, string, Identifications::ID_TYPE, std::optional<std::variant<gp_Trsf, gp_GTrsf>>>(&Identify),
+         py::arg("other"), py::arg("name"),
+         py::arg("type")=Identifications::PERIODIC, py::arg("trafo")=nullopt,
+         "Identify shapes for periodic meshing")
 
     .def("Distance", [](const TopoDS_Shape& self,
                         const TopoDS_Shape& other)
@@ -1492,13 +1495,13 @@ DLL_HEADER void ExportNgOCCShapes(py::module &m)
             {
                 auto & props = OCCGeometry::global_shape_properties;
                 for(auto & s : GetSolids(shapes[i]))
-                    props[s.TShape()].layer = i+1;
+                    props[s].layer = i+1;
                 for(auto & s : GetFaces(shapes[i]))
-                    props[s.TShape()].layer = i+1;
+                    props[s].layer = i+1;
                 for(auto & s : GetEdges(shapes[i]))
-                    props[s.TShape()].layer = i+1;
+                    props[s].layer = i+1;
                 for(auto & s : GetVertices(shapes[i]))
-                    props[s.TShape()].layer = i+1;
+                    props[s].layer = i+1;
             }
           }
 
@@ -1543,7 +1546,7 @@ DLL_HEADER void ExportNgOCCShapes(py::module &m)
     bool operator==(ListOfShapesIterator it2) const { return ptr == it2.ptr; }
   };
   
-  py::class_<ListOfShapes> (m, "ListOfShapes")
+  pyListOfShapes_Forward
     .def("__iter__", [](ListOfShapes &s) {
         return py::make_iterator(ListOfShapesIterator(&*s.begin()),
                                  ListOfShapesIterator(&*s.end()));
@@ -1706,32 +1709,33 @@ DLL_HEADER void ExportNgOCCShapes(py::module &m)
                     for(auto& shape : shapes)
                       OCCGeometry::global_shape_properties[shape].quad_dominated = quad_dominated;
                   })
-    
-    .def("Identify", [](const ListOfShapes& me,
-                        const ListOfShapes& other,
-                        string name,
-                        Identifications::ID_TYPE type,
-                        std::variant<gp_Trsf, gp_GTrsf> trafo)
+
+    .def("Identify",[](const ListOfShapes& me,
+                       const ListOfShapes& other,
+                       string name,
+                       Identifications::ID_TYPE type,
+                       std::variant<gp_Trsf, gp_GTrsf> &trafo)
     {
-      Identify(me, other, name, type, occ2ng(trafo));
+        Transformation<3> t = occ2ng(trafo);
+        Identify(me, other, name, type, t);
     }, py::arg("other"), py::arg("name"),
-         py::arg("type")=Identifications::PERIODIC, py::arg("trafo"),
+         py::arg("type"), py::arg("trafo"),
          "Identify shapes for periodic meshing")
 
+    .def("Identify",[](const ListOfShapes& me,
+                       const ListOfShapes& other,
+                       string name,
+                       std::variant<gp_Trsf, gp_GTrsf> &trafo)
+    {
+        Transformation<3> t = occ2ng(trafo);
+        Identify(me, other, name, Identifications::PERIODIC, t);
+    }, py::arg("other"), py::arg("name"), py::arg("trafo"),
+         "Identify shapes for periodic meshing")
     ;
-         
 
 
 
-
-
-
-
-
-
-
-  
-  py::class_<Handle(Geom2d_Curve)> (m, "Geom2d_Curve")
+  pyGeom2d_Curve_Forward
     .def("Trim", [](Handle(Geom2d_Curve) curve, double u1, double u2) -> Handle(Geom2d_Curve)
          {
            return new Geom2d_TrimmedCurve (curve, u1, u2);

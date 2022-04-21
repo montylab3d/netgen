@@ -352,7 +352,7 @@ DLL_HEADER void ExportNgOCCBasic(py::module &m)
         cout << "and of intervals" << endl;
         return self.Intersect(other);
       })
-    ;    
+    ;
   
   py::implicitly_convertible<py::tuple, gp_Pnt>();
   py::implicitly_convertible<py::tuple, gp_Vec>();
