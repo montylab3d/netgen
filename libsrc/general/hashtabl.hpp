@@ -336,14 +336,17 @@ protected:
   ///
   int Position (int bnr, const INDEX_3 & ind) const
   {
-    const INDEX_3 * pi = &hash.Get(bnr, 1);
-    int n = hash.EntrySize(bnr);
-    for (int i = 1; i <= n; ++i, ++pi)
-      {
-	if (*pi == ind)
-	return i;
-      }
-    
+    // This is called by Set, potentially before any Add.
+    // Guard case where hash line is not yet allocated.
+    const INDEX_3 * pi = hash.GetLine(bnr);
+    if (pi) {
+      int n = hash.EntrySize(bnr);
+      for (int i = 1; i <= n; ++i, ++pi)
+        {
+          if (*pi == ind)
+            return i;
+        }
+    }
     return 0;
   }
 

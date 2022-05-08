@@ -27,9 +27,10 @@ namespace netgen
     SetVisible (1); 
     SetLayer (1);
 
-    if (!surface)
-      maxh = solid->GetMaxH();
-    else
+    if (!surface) {
+      if (solid)
+        maxh = solid->GetMaxH();
+    } else
       maxh = surface->GetMaxH();
 
     SetBCProp (-1);
