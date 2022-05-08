@@ -25,16 +25,16 @@ namespace netgen
   */
   class DLL_HEADER TopLevelObject
   {
-    Solid * solid;
-    Surface * surface;
+    Solid * solid = NULL;
+    Surface * surface = NULL;
 
-    double red, blue, green;
-    bool visible, transp;
-    double maxh;
+    double red = 0.0, blue = 0.0, green=1.0;
+    bool visible = true, transp = false;
+    double maxh = 1e10;
     string material;
-    int layer;
-    int bc;     // for surface patches, only
-    string bcname;
+    int layer = 1;
+    int bc = -1;     // for surface patches, only
+    string bcname = "default";
 
   public:
     TopLevelObject (Solid * asolid,

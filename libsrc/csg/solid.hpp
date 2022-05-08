@@ -61,14 +61,14 @@ namespace netgen
     typedef enum optyp1 { TERM, TERM_REF, SECTION, UNION, SUB, ROOT /*, DUMMY */ } optyp;
   
   private:
-    char * name;
-    Primitive * prim;
-    Solid * s1, * s2;
-  
-    optyp op;
-    bool visited;
-    double maxh;
-    int num_surfs;
+    char * name = NULL;
+    Primitive * prim = NULL;
+    Solid * s1 = NULL, * s2 = NULL;
+
+    optyp op = TERM;
+    bool visited = false;
+    double maxh = 1e10;
+    int num_surfs = 0;
 
     // static int cntnames;
 
