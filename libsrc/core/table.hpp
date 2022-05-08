@@ -104,7 +104,7 @@ namespace ngcore
   { return TablePrefixSum32 (FlatArray<unsigned> (entrysize.Size(), (unsigned int*)(int*)(entrysize.Addr(0)))); }
   NETGEN_INLINE size_t * TablePrefixSum (FlatArray<std::atomic<int>> entrysize)
   { return TablePrefixSum32 (FlatArray<unsigned> (entrysize.Size(), (unsigned int*)(std::atomic<int>*)entrysize.Addr(0))); }
-#ifdef _____LP64_____
+#ifdef __LP64__
   NETGEN_INLINE size_t * TablePrefixSum (FlatArray<size_t> entrysize)
   { return TablePrefixSum64 (entrysize); }
 #endif
