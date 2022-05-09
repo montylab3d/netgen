@@ -1,3 +1,4 @@
+import pytest
 from netgen.csg import *
 
 def test_2_polyhedra():
@@ -21,6 +22,6 @@ def test_2_polyhedra():
 
 
 if __name__ == "__main__":
-    from ngsolve import Mesh, Draw
-    mesh = Mesh(test_2_polyhedra())
+    ngs = pytest.importorskip('ngsolve');
+    mesh = ngs.Mesh(test_2_polyhedra())
     Draw(mesh)
