@@ -1681,13 +1681,13 @@ DLL_HEADER void ExportNgOCCShapes(py::module &m)
         for(auto& shape : shapes)
           {
             for(auto& s : GetSolids(shape))
-              OCCGeometry::global_shape_properties[ShapeHash(shape)].maxh = maxh;
+              OCCGeometry::global_shape_properties[shape].maxh = maxh;
             for(auto& s : GetFaces(shape))
-              OCCGeometry::global_shape_properties[ShapeHash(shape)].maxh = maxh;
+              OCCGeometry::global_shape_properties[shape].maxh = maxh;
             for(auto& s : GetEdges(shape))
-              OCCGeometry::global_shape_properties[ShapeHash(shape)].maxh = maxh;
+              OCCGeometry::global_shape_properties[shape].maxh = maxh;
             for(auto& s : GetVertices(shape))
-              OCCGeometry::global_shape_properties[ShapeHash(shape)].maxh = maxh;
+              OCCGeometry::global_shape_properties[shape].maxh = maxh;
           }
       }, "set maxh for all elements of list")
     .def_property("hpref", [](ListOfShapes& shapes)
