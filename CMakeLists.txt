@@ -5,6 +5,7 @@ endif(NOT CMAKE_BUILD_TYPE)
 cmake_minimum_required(VERSION 3.13)
 cmake_policy(VERSION 3.13)
 
+set(CMAKE_VERBOSE_MAKEFILE ON)
 option( USE_NATIVE_ARCH  "build for native cpu architecture" ON)
 
 option( USE_GUI     "build with GUI" ON )
@@ -485,6 +486,7 @@ include(CTest)
 
 if(ENABLE_UNIT_TESTS)
   include(${CMAKE_CURRENT_LIST_DIR}/cmake/external_projects/catch.cmake)
+  add_subdirectory(tests)
 endif(ENABLE_UNIT_TESTS)
 
 
@@ -534,7 +536,6 @@ add_subdirectory(tutorials)
 add_subdirectory(py_tutorials)
 add_subdirectory(doc)
 add_subdirectory(nglib)
-add_subdirectory(tests)
 
 #######################################################################
 if(USE_NATIVE_ARCH)
@@ -720,6 +721,7 @@ message("
     GUI: ............... ${USE_GUI}
     MPI: ............... ${USE_MPI}
     PYTHON: ............ ${USE_PYTHON}
+    UNIT TESTS: ........ ${ENABLE_UNIT_TESTS}
 
 
   Building: ")
