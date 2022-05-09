@@ -128,7 +128,7 @@ public:
   ///
 
 
-  INDEX_2 Sort ()
+  void Sort ()
   {
     if (i[0] > i[1]) 
       {
@@ -136,7 +136,6 @@ public:
 	i[0] = i[1];
 	i[1] = hi;
       }
-    return *this;
   }
 
   static INDEX_2 Sort (int i1, int i2)
@@ -169,17 +168,14 @@ public:
 };
 
   /*
-inline INDEX_2 Sort (const INDEX_2 & i2)
+inline void Sort (const INDEX_2 & i2)
 {
-  INDEX_2 tmp = i2;
   tmp.Sort();
-  return tmp;
 }
   */
-inline INDEX_2 Sort (INDEX_2 i2)
+inline void Sort (INDEX_2& i2)
 {
   i2.Sort();
-  return i2;
 }
 
 inline bool operator< (const INDEX_2 ia, const INDEX_2 ib)
@@ -209,9 +205,9 @@ public:
     { i[0] = in2.i[0]; i[1] = in2.i[1]; i[2] = in2.i[2]; }
 
 
-  static INDEX_3 Sort (INDEX_3 i3)
+  static void Sort (INDEX_3& i3)
   {
-    return i3.Sort();
+    i3.Sort();
   }
 
   static INDEX_3 Sort (int i1, int i2, int i3)
@@ -222,12 +218,11 @@ public:
     return INDEX_3 (i1, i2, i3);
   }
 
-  INDEX_3 Sort ()
+  void Sort ()
   {
     if (i[0] > i[1]) Swap (i[0], i[1]);
     if (i[1] > i[2]) Swap (i[1], i[2]);
     if (i[0] > i[1]) Swap (i[0], i[1]);
-    return *this;
   }
 
   int operator== (const INDEX_3 & in2) const

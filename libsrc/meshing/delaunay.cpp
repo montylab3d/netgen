@@ -97,8 +97,11 @@ namespace netgen
     void Delete (int elnr)
     {
       DelaunayTet & el = tets.Elem(elnr);
-      for (int i = 0; i < 4; i++)
-	faces.Set (el.GetFace(i).Sort(), el.NB(i));
+      for (int i = 0; i < 4; i++){
+        INDEX_3 i3 = el.GetFace(i);
+        i3.Sort();
+	faces.Set (i3, el.NB(i));
+      }
     }
 
     // get neighbour of element elnr in direction fnr 
@@ -122,7 +125,8 @@ namespace netgen
 
     for (int i = 0; i < 4; i++)
       {
-	INDEX_3 i3 = INDEX_3::Sort (el.GetFace(i));
+	INDEX_3 i3 = el.GetFace(i);
+	i3.Sort();
 
 	int posnr;
 	
