@@ -571,18 +571,26 @@ namespace netgen
 
      auto md = DivideMesh(mesh3d, mp);
 
-     ParallelFor( md.Range(), [&](int i)
+     try
        {
-         if (mp.checkoverlappingboundary)
-           if (md[i].mesh->CheckOverlappingBoundary())
-             throw NgException ("Stop meshing since boundary mesh is overlapping");
-         
-         if(md[i].mesh->GetGeometry()->GetGeomType() == Mesh::GEOM_OCC)
-           FillCloseSurface( md[i] );
-         CloseOpenQuads( md[i] );
-         MeshDomain(md[i]);
-       }, md.Size());
+         ParallelFor( md.Range(), [&](int i)
+         {
+           if (mp.checkoverlappingboundary)
+             if (md[i].mesh->CheckOverlappingBoundary())
+               throw NgException ("Stop meshing since boundary mesh is overlapping");
 
+           if(md[i].mesh->GetGeometry()->GetGeomType() == Mesh::GEOM_OCC)
+             FillCloseSurface( md[i] );
+           CloseOpenQuads( md[i] );
+           MeshDomain(md[i]);
+         }, md.Size());
+       }
+     catch(...)
+       {
+         if(md.Size()==1)
+           md[0].mesh.release();
+         throw;
+       }
      MergeMeshes(mesh3d, md);
 
      MeshQuality3d (mesh3d);
