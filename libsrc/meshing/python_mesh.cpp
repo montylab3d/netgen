@@ -166,12 +166,68 @@ DLL_HEADER void ExportNetgenMeshing(py::module &m)
 #ifdef NG_MPI4PY
   py::implicitly_convertible<mpi4py_comm, NgMPI_Comm>();
 #endif // NG_MPI4PY
-
-  
   py::class_<NGDummyArgument>(m, "NGDummyArgument")
     .def("__bool__", []( NGDummyArgument &self ) { return false; } )
     ;
-  
+  py::class_<Vec<3>> (m, "Vec3d")
+    .def(py::init<double,double,double>())
+    .def(py::init([](py::tuple v)
+    {
+      return Vec<3> { v[0].cast<double>(), v[1].cast<double>(),
+        v[2].cast<double>() };
+    }))
+    .def ("__str__", &ToString<Vec<3>>)
+    .def(py::self==py::self)
+    .def(py::self+py::self)
+    .def(py::self-py::self)
+    .def(-py::self)
+    .def(double()*py::self)
+    .def(py::self*double())
+    .def("Norm", &Vec<3>::Length)
+    .def("__getitem__", [](Vec<3>& vec, int index) { return vec[index]; })
+    .def("__len__", [](Vec<3>& /*unused*/) { return 3; })
+    ;
+
+  py::implicitly_convertible<py::tuple, Vec<3>>();
+
+  py::class_<Vec<2>> (m, "Vec2d")
+    .def(py::init<double,double>())
+    .def(py::init( [] (std::pair<double,double> xy)
+            {
+                return Vec<2>{xy.first, xy.second};
+            }))
+    .def ("__str__", &ToString<Vec<3>>)
+    .def(py::self==py::self)
+    .def(py::self+py::self)
+    .def(py::self-py::self)
+    .def(-py::self)
+    .def(double()*py::self)
+    .def(py::self*double())
+    .def("Norm", &Vec<2>::Length)
+    .def("__getitem__", [](Vec<2>& vec, int index) { return vec[index]; })
+    .def("__len__", [](Vec<2>& /*unused*/) { return 2; })
+    ;
+
+  py::implicitly_convertible<py::tuple, Vec<2>>();
+
+  m.def ("Vec", FunctionPointer
+           ([] (double x, double y, double z) { return global_trafo(Vec<3>(x,y,z)); }));
+  m.def("Vec", [](py::array_t<double> np_array)
+               {
+                 int dim = np_array.size();
+                 if(!(dim == 2 || dim == 3))
+                   throw Exception("Invalid dimension of input array!");
+                 if(dim == 2)
+                   return py::cast(Vec<2>(np_array.at(0),
+                                          np_array.at(1)));
+                 return py::cast(global_trafo(Vec<3>(np_array.at(0),
+                                                     np_array.at(1),
+                                                     np_array.at(2))));
+               });
+
+  m.def ("Vec", FunctionPointer
+           ([] (double x, double y) { return Vec<2>(x,y); }));
+
   py::class_<Point<2>> (m, "Point2d")
     .def(py::init<double,double>())
     .def(py::init( [] (std::pair<double,double> xy)
@@ -218,65 +274,6 @@ DLL_HEADER void ExportNetgenMeshing(py::module &m)
                                                        np_array.at(1),
                                                        np_array.at(2))));
                });
-
-  py::class_<Vec<2>> (m, "Vec2d")
-    .def(py::init<double,double>())
-    .def(py::init( [] (std::pair<double,double> xy)
-            {
-                return Vec<2>{xy.first, xy.second};
-            }))
-    .def ("__str__", &ToString<Vec<3>>)
-    .def(py::self==py::self)
-    .def(py::self+py::self)
-    .def(py::self-py::self)
-    .def(-py::self)
-    .def(double()*py::self)
-    .def(py::self*double())
-    .def("Norm", &Vec<2>::Length)
-    .def("__getitem__", [](Vec<2>& vec, int index) { return vec[index]; })
-    .def("__len__", [](Vec<2>& /*unused*/) { return 2; })
-    ;
-
-  py::implicitly_convertible<py::tuple, Vec<2>>();
-
-  py::class_<Vec<3>> (m, "Vec3d")
-    .def(py::init<double,double,double>())
-    .def(py::init([](py::tuple v)
-    {
-      return Vec<3> { v[0].cast<double>(), v[1].cast<double>(),
-        v[2].cast<double>() };
-    }))
-    .def ("__str__", &ToString<Vec<3>>)
-    .def(py::self==py::self)
-    .def(py::self+py::self)
-    .def(py::self-py::self)
-    .def(-py::self)
-    .def(double()*py::self)
-    .def(py::self*double())
-    .def("Norm", &Vec<3>::Length)
-    .def("__getitem__", [](Vec<3>& vec, int index) { return vec[index]; })
-    .def("__len__", [](Vec<3>& /*unused*/) { return 3; })
-    ;
-
-  py::implicitly_convertible<py::tuple, Vec<3>>();
-
-  m.def ("Vec", FunctionPointer
-           ([] (double x, double y, double z) { return global_trafo(Vec<3>(x,y,z)); }));
-  m.def("Vec", [](py::array_t<double> np_array)
-               {
-                 int dim = np_array.size();
-                 if(!(dim == 2 || dim == 3))
-                   throw Exception("Invalid dimension of input array!");
-                 if(dim == 2)
-                   return py::cast(Vec<2>(np_array.at(0),
-                                          np_array.at(1)));
-                 return py::cast(global_trafo(Vec<3>(np_array.at(0),
-                                                     np_array.at(1),
-                                                     np_array.at(2))));
-               });
-
-  m.def ("Vec", FunctionPointer
-           ([] (double x, double y) { return Vec<2>(x,y); }));
 
   py::class_<Transformation<3>> (m, "Trafo")
     .def(py::init<Vec<3>>(), "a translation")
@@ -410,7 +407,7 @@ DLL_HEADER void ExportNetgenMeshing(py::module &m)
                     newel->SetIndex(index);
                     return newel;
                   }),
-          py::arg("index")=1,py::arg("vertices"),
+      py::arg_v("index", 1, "1"), py::arg_v("vertices", std::vector<PointIndex>(), "[]"),
          "create volume element"
          )
     .def("__repr__", &ToString<Element>)
@@ -470,7 +467,7 @@ DLL_HEADER void ExportNetgenMeshing(py::module &m)
                        throw NgException("Inconsistent number of vertices in Element2D");
                      return newel;
                    }),
-                   py::arg("index")=1,py::arg("vertices"),
+      py::arg("index")=1,py::arg_v("vertices", std::vector<PointIndex>(), "[]"),
          "create surface element"
          )
     .def_property("index", &Element2d::GetIndex, &Element2d::SetIndex)
@@ -651,6 +648,38 @@ DLL_HEADER void ExportNetgenMeshing(py::module &m)
     .def("RestrictH", &NetgenGeometry::RestrictH)
              ;
   
+  typedef MeshingParameters MP;
+  auto mp = py::class_<MP> (m, "MeshingParameters")
+    .def(py::init<>())
+            .def(py::init([](MeshingParameters* other, py::kwargs kwargs)
+                  {
+                    MeshingParameters mp;
+                    if(other) mp = *other;
+                    CreateMPfromKwargs(mp, kwargs, false);
+                    return mp;
+                  }), py::arg("mp")=nullptr, meshingparameter_description.c_str())
+    .def("__str__", &ToString<MP>)
+    .def("RestrictH", [](MP & mp, double x, double y, double z, double h)
+          {
+            mp.meshsize_points.Append ( MeshingParameters::MeshSizePoint(Point<3> (x,y,z), h));
+          }, py::arg("x"), py::arg("y"), py::arg("z"), py::arg("h")
+         )
+    .def("RestrictH", [](MP & mp, const Point<3>& p, double h)
+    {
+      mp.meshsize_points.Append ({p, h});
+    }, py::arg("p"), py::arg("h"))
+    .def("RestrictHLine", [](MP& mp, const Point<3>& p1, const Point<3>& p2,
+                             double maxh)
+    {
+      int steps = int(Dist(p1, p2) / maxh) + 2;
+      auto v = p2 - p1;
+      for (int i = 0; i <= steps; i++)
+        {
+          mp.meshsize_points.Append({p1 + double(i)/steps * v, maxh});
+        }
+    }, py::arg("p1"), py::arg("p2"), py::arg("maxh"))
+    ;
+
   py::class_<Mesh,shared_ptr<Mesh>>(m, "Mesh")
     // .def(py::init<>("create empty mesh"))
 
@@ -663,7 +692,7 @@ DLL_HEADER void ExportNetgenMeshing(py::module &m)
                      mesh -> SetGeometry (nullptr);
                      return mesh;
                    } ),
-         py::arg("dim")=3, py::arg("comm")=NgMPI_Comm{}
+      py::arg("dim")=3, py::arg_v("comm", NgMPI_Comm(), "NgMPI_Comm()")
          )
     .def(NGSPickle<Mesh>())
     .def_property_readonly("comm", [](const Mesh & amesh) -> NgMPI_Comm
@@ -1449,38 +1478,6 @@ project_boundaries : Optional[str] = None
     .value("MESHVOLUME", MESHCONST_OPTVOLUME)
     ;
          
-  typedef MeshingParameters MP;
-  auto mp = py::class_<MP> (m, "MeshingParameters")
-    .def(py::init<>())
-            .def(py::init([](MeshingParameters* other, py::kwargs kwargs)
-                  {
-                    MeshingParameters mp;
-                    if(other) mp = *other;
-                    CreateMPfromKwargs(mp, kwargs, false);
-                    return mp;
-                  }), py::arg("mp")=nullptr, meshingparameter_description.c_str())
-    .def("__str__", &ToString<MP>)
-    .def("RestrictH", [](MP & mp, double x, double y, double z, double h)
-          {
-            mp.meshsize_points.Append ( MeshingParameters::MeshSizePoint(Point<3> (x,y,z), h));
-          }, py::arg("x"), py::arg("y"), py::arg("z"), py::arg("h")
-         )
-    .def("RestrictH", [](MP & mp, const Point<3>& p, double h)
-    {
-      mp.meshsize_points.Append ({p, h});
-    }, py::arg("p"), py::arg("h"))
-    .def("RestrictHLine", [](MP& mp, const Point<3>& p1, const Point<3>& p2,
-                             double maxh)
-    {
-      int steps = int(Dist(p1, p2) / maxh) + 2;
-      auto v = p2 - p1;
-      for (int i = 0; i <= steps; i++)
-        {
-          mp.meshsize_points.Append({p1 + double(i)/steps * v, maxh});
-        }
-    }, py::arg("p1"), py::arg("p2"), py::arg("maxh"))
-    ;
-
   m.def("SetTestoutFile", FunctionPointer ([] (const string & filename)
                                              {
                                                delete testout;

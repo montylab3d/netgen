@@ -21,6 +21,12 @@ using namespace netgen;
 
 DLL_HEADER void ExportNgOCCBasic(py::module &m) 
 {
+  auto pyAx1 = py::class_<gp_Ax1>(m, "Axis", "an OCC axis in 3d");
+  auto pyAx2 = py::class_<gp_Ax2>(m, "gp_Ax2");
+  auto pyAx2d = py::class_<gp_Ax2d>(m, "gp_Ax2d", "2d OCC coordinate system");
+  auto pyAx3 = py::class_<gp_Ax3>(m, "Axes", "an OCC coordinate system in 3d");
+  auto pyDirectionalInterval = py::class_<DirectionalInterval> (m, "DirectionalInterval");
+
   py::class_<gp_Pnt>(m, "gp_Pnt", "3d OCC point")
     .def(py::init([] (py::tuple pnt)
                   {
@@ -129,15 +135,18 @@ DLL_HEADER void ExportNgOCCBasic(py::module &m)
         str << "(" << p.X() << ", " << p.Y() << ", " << p.Z() << ")";
         return str.str();
       })
+    .def("__repr__", [] (const gp_Dir & p) {
+        stringstream str;
+        str << "(" << p.X() << ", " << p.Y() << ", " << p.Z() << ")";
+        return str.str();
+      })
     ;
-  
-  py::class_<gp_Ax1>(m, "Axis", "an OCC axis in 3d") 
-    .def(py::init([](gp_Pnt p, gp_Dir d) {
+
+  pyAx1.def(py::init([](gp_Pnt p, gp_Dir d) {
           return gp_Ax1(p,d);
         }), py::arg("p"), py::arg("d"))
     ;
-  py::class_<gp_Ax2>(m, "gp_Ax2")
-    .def(py::init([](gp_Pnt p, gp_Dir d) {
+  pyAx2.def(py::init([](gp_Pnt p, gp_Dir d) {
           return gp_Ax2(p,d);
         }))
     .def(py::init([](const gp_Ax3 & ax3) {
@@ -145,12 +154,20 @@ DLL_HEADER void ExportNgOCCBasic(py::module &m)
         }))
     ;
 
-  py::class_<gp_Ax3>(m, "Axes", "an OCC coordinate system in 3d")
-    .def(py::init([](gp_Pnt p, gp_Dir N, gp_Dir Vx) {
-          return gp_Ax3(p,N, Vx);
-        }), py::arg("p")=gp_Pnt(0,0,0), py::arg("n")=gp_Vec(0,0,1), py::arg("h")=gp_Vec(1,0,0))
+  pyAx3
+    .def(py::init([](gp_Pnt p, gp_Dir N, gp_Dir Vx)
+      {
+        return gp_Ax3(p,N, Vx);
+      }), py::arg("p")=gp_Pnt(0,0,0), py::arg("n")=gp_Vec(0,0,1), py::arg("h")=gp_Vec(1,0,0))
     .def(py::init<gp_Ax2>())
     .def_property("p", [](gp_Ax3 & ax) { return ax.Location(); }, [](gp_Ax3&ax, gp_Pnt p) { ax.SetLocation(p); })
+    .def("__repr__", [] (const gp_Ax3 & a) {
+      stringstream str;
+      str << "(" << py::cast(a.Location()).attr("__repr__")()
+          << ", " << py::cast(a.Direction()).attr("__repr__")()
+          << ", " << py::cast(a.XDirection()).attr("__repr__")() << ")";
+      return str.str();
+    })
     ;
 
 
@@ -224,6 +241,11 @@ DLL_HEADER void ExportNgOCCBasic(py::module &m)
     .def(py::init([] (double x, double y) {
           return gp_Dir2d(x, y);
         }), py::arg("x"), py::arg("y"))
+    .def("__repr__", [] (const gp_Dir2d & d) {
+        stringstream str;
+        str << "(" << d.X() << ", " << d.Y() << ")";
+        return str.str();
+      })
     ;
 
   m.def("Pnt", [](double x, double y) { return gp_Pnt2d(x,y); },
@@ -265,13 +287,15 @@ DLL_HEADER void ExportNgOCCBasic(py::module &m)
           throw Exception("OCC-Dirs only in 2D or 3D");
         }, py::arg("d"), "create 2d or 3d OCC direction");                    
 
-
-
-  
-  py::class_<gp_Ax2d>(m, "gp_Ax2d", "2d OCC coordinate system")
-    .def(py::init([](gp_Pnt2d p, gp_Dir2d d) {
+  pyAx2d.def(py::init([](gp_Pnt2d p, gp_Dir2d d)
+        {
           return gp_Ax2d(p,d);
-        }), py::arg("p")=gp_Pnt2d(0,0), py::arg("d")=gp_Dir2d(1,0))
+        }), py::arg("p")=gp_Pnt2d(0,0), py::arg("d")=gp_Dir2d(1,0), "Create an axis in a plane")
+    .def("__repr__", [] (const gp_Ax2d & a) {
+        stringstream str;
+        str << "(" << py::cast(a.Location()).attr("__repr__")() << ", " << py::cast(a.Direction()).attr("__repr__")() << ")";
+        return str.str();
+      })
     ;
 
   py::class_<gp_GTrsf>(m, "gp_GTrsf")
@@ -330,8 +354,7 @@ DLL_HEADER void ExportNgOCCBasic(py::module &m)
     ;
 
 
-  py::class_<DirectionalInterval> (m, "DirectionalInterval")
-    .def("__str__", [](DirectionalInterval self)
+  pyDirectionalInterval.def("__str__", [](DirectionalInterval self)
          {
            stringstream str;
            str << "(" << self.minval << ", " << self.maxval << ")";

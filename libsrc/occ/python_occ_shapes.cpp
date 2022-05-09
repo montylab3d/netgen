@@ -69,6 +69,7 @@
 #include <gp_Ax1.hxx>
 #include <gp_Ax2.hxx>
 #include <gp_Ax2d.hxx>
+#include <gp_Ax3.hxx>
 #include <gp_Pln.hxx>
 #include <gp_Trsf.hxx>
 #include <gp_GTrsf.hxx>
@@ -149,7 +150,7 @@ void ExtractFaceData( const TopoDS_Face & face, int index, std::vector<double> *
         std::array<Point<3>,3> pts;
         std::array<Vec<3>,3> normals;
         for (int k = 0; k < 3; k++)
-          pts[k] = occ2ng( triangulation -> Node(triangle(k+1)).Transformed(loc) );
+          pts[k] = occ2ng( (triangulation -> Node(triangle(k+1))).Transformed(loc) );
 
         for (int k = 0; k < 3; k++)
           {
@@ -671,6 +672,7 @@ DLL_HEADER void ExportNgOCCShapes(py::module &m)
 
   auto pyListOfShapes_Forward = py::class_<ListOfShapes> (m, "ListOfShapes");
   auto pyGeom2d_Curve_Forward = py::class_<Handle(Geom2d_Curve)> (m, "Geom2d_Curve");
+  py::class_<Array<std::array<Point<3>,3>,size_t>>(m, "ArrayOfTriangles");
 
   py::class_<TopoDS_Shape> (m, "TopoDS_Shape")
     .def("__str__", [] (const TopoDS_Shape & shape)
@@ -1158,13 +1160,13 @@ DLL_HEADER void ExportNgOCCShapes(py::module &m)
            // throw Exception("Don't have a triangulation, call 'MakeTriangulation' first");
 
            int ntriangles = triangulation -> NbTriangles();
-           Array< std::array<Point<3>,3> > triangles;
+           Array<std::array<Point<3>,3>,size_t> triangles;
            for (int j = 1; j <= ntriangles; j++)
              {
                Poly_Triangle triangle = triangulation -> Triangle(j);
                std::array<Point<3>,3> pts;
                for (int k = 0; k < 3; k++)
-                 pts[k] = occ2ng( triangulation -> Node(triangle(k+1)).Transformed(loc) );
+                 pts[k] = occ2ng( (triangulation -> Node(triangle(k+1))).Transformed(loc) );
                triangles.Append ( pts );
              }
            
@@ -2438,7 +2440,11 @@ degen_tol : double
   }, py::arg("edges"), py::arg("tol")=1e-8, py::arg("shared")=true);
 
   py::class_<WorkPlane, shared_ptr<WorkPlane>> (m, "WorkPlane")
-    .def(py::init<gp_Ax3, gp_Ax2d>(), py::arg("axes")=gp_Ax3(), py::arg("pos")=gp_Ax2d())
+    .def(py::init([](const gp_Ax3 &axes, const gp_Ax2d pos){
+           return WorkPlane(axes,pos);
+      }),
+      py::arg("axes") = gp_Ax3(),
+      py::arg("pos") = gp_Ax2d())
     .def_property_readonly("cur_loc", &WorkPlane::CurrentLocation)
     .def_property_readonly("cur_dir", &WorkPlane::CurrentDirection)
     .def_property_readonly("start_pnt", &WorkPlane::StartPnt)
