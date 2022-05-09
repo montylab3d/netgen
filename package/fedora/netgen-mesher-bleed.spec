@@ -13,8 +13,10 @@
 %else
 	%global build_mpich 1
 %endif
-%global build_openmpi 1
 
+%global save_PYTHONPATH %{getenv:PYTHONPATH}
+%global save_LD_PRELOAD %{getenv:LD_PRELOAD}
+%global save_ASAN_OPTIONS %{getenv:ASAN_OPTIONS}
 %define name netgen-mesher
 
 Name:           %{name}
@@ -173,9 +175,38 @@ Python3 interface for netgen compiled against mpich.
 rm -rf external_dependencies/pybind11
 
 %build
+
+export CXXFLAGS=" \
+       -fno-fat-lto-objects \
+       -Wno-deprecated \
+       -Wno-sign-compare \
+       -Wno-unused-variable \
+       -Wno-unused-but-set-variable \
+       -Wno-cpp \
+       -Wno-unused \
+       -Wno-parentheses \
+       -g3 \
+       -O0 \
+       -fno-inline \
+       -fno-omit-frame-pointer \
+       -fsanitize=undefined \
+       -fsanitize=address \
+       -fno-common \
+     "
+export LDFLAGS=" \
+       -g3 \
+       -O0 \
+       -fno-inline \
+       -fno-omit-frame-pointer \
+       -fsanitize=undefined \
+       -fsanitize=address \
+       -fno-common \
+     "
+
 ### serial version ###
 %define _vpath_builddir %{_target_platform}
- %cmake \
+
+%cmake \
      -DNETGEN_VERSION_GIT={{{git describe --tags --match "v[0-9]*" --long --dirty}}} \
      -DCMAKE_INSTALL_PREFIX=%{_prefix} \
      -DNG_INSTALL_SUFFIX=%{name} \
@@ -184,6 +215,7 @@ rm -rf external_dependencies/pybind11
      -DNG_INSTALL_DIR_LIB=%{_libdir} \
      -DNG_INSTALL_DIR_CMAKE=%{_libdir}/cmake/%{name} \
      -DNG_INSTALL_DIR_PYTHON=%{python3_sitearch} \
+     -DNETGEN_PYTHON_PACKAGE_NAME="netgen" \
      -DENABLE_UNIT_TESTS=ON \
      -DCHECK_RANGE=ON \
      -DUSE_SUPERBUILD=OFF \
@@ -197,7 +229,7 @@ rm -rf external_dependencies/pybind11
 %define _vpath_builddir %{_target_platform}-openmpi
 %{_openmpi_load}
 export CXX=mpicxx
- %cmake \
+%cmake \
      -DNETGEN_VERSION_GIT={{{git describe --tags --match "v[0-9]*" --long --dirty}}} \
      -DCMAKE_INSTALL_PREFIX=%{_prefix} \
      -DNG_INSTALL_SUFFIX=%{name} \
@@ -207,6 +239,7 @@ export CXX=mpicxx
      -DNG_INSTALL_DIR_LIB=%{_libdir}/openmpi/lib/ \
      -DNG_INSTALL_DIR_CMAKE=%{_libdir}/openmpi/lib/cmake/%{name} \
      -DNG_INSTALL_DIR_PYTHON=%{_libdir}/openmpi/python%{python3_version}/site-packages/ \
+     -DNETGEN_PYTHON_PACKAGE_NAME="netgen" \
      -DUSE_CGNS=1 -DUSE_JPEG=1 -DUSE_OCC=1 -DUSE_MPI=1 \
      -DOpenGL_GL_PREFERENCE=GLVND \
 %cmake_build
@@ -218,7 +251,7 @@ export CXX=mpicxx
 %define _vpath_builddir %{_target_platform}-mpich
 %{_mpich_load}
 export CXX=mpicxx
- %cmake \
+%cmake \
      -DNETGEN_VERSION_GIT={{{git describe --tags --match "v[0-9]*" --long --dirty}}} \
      -DCMAKE_INSTALL_PREFIX=%{_prefix} \
      -DNG_INSTALL_SUFFIX=%{name} \
@@ -229,6 +262,7 @@ export CXX=mpicxx
      -DNG_INSTALL_DIR_LIB=%{_libdir}/mpich/lib/ \
      -DNG_INSTALL_DIR_CMAKE=%{_libdir}/mpich/lib/cmake/%{name} \
      -DNG_INSTALL_DIR_PYTHON=%{_libdir}/mpich/python%{python3_version}/site-packages/ \
+     -DNETGEN_PYTHON_PACKAGE_NAME="netgen" \
      -DUSE_CGNS=1 -DUSE_JPEG=1 -DUSE_OCC=1 -DUSE_MPI=1 \
      -DOpenGL_GL_PREFERENCE=GLVND \
 %cmake_build
@@ -277,6 +311,10 @@ export PYTHONPATH=.:%{buildroot}%{python3_sitearch}
 export LD_PRELOAD=libasan.so.6
 export ASAN_OPTIONS=detect_odr_violation=0:detect_leaks=0
 %cmake_install
+export PYTHONPATH=%{save_PYTHONPATH}
+export LD_PRELOAD=%{save_LD_PRELOAD}
+export ASAN_OPTIONS=${save_ASAN_OPTIONS}
+
 export MPI_LIB=%{_libdir}
 export MPI_INCLUDE=%{_includedir}
 %writepkgconfig
@@ -360,6 +398,15 @@ install -Dpm 0644 nglib/nglib.h %{buildroot}%{_includedir}/%{name}/nglib.h
 %{_libdir}/mpich/python%{python3_version}/site-packages/netgen/
 %endif
 
+%check
+%define _vpath_builddir %{_target_platform}
+export PYTHONPATH=.:%{buildroot}%{python3_sitearch}
+#export LD_PRELOAD=libasan.so.6
+#export ASAN_OPTIONS=detect_odr_violation=0:detect_leaks=0
+%ctest
+export PYTHONPATH=%{save_PYTHONPATH}
+#export LD_PRELOAD=%{save_LD_PRELOAD}
+#export ASAN_OPTIONS=${save_ASAN_OPTIONS}
 
 %changelog
 * Fri Apr 08 2022 Monty <xiphmont@gmail.com> - 6.2.dev-master
